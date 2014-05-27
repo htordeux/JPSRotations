@@ -341,6 +341,8 @@ local spellTable = {
 			--{ 586, playerAggro and jps.glyphInfo(55684) , "player" , "Aggro_Oubli_" },
 			-- "Divine Star" Holy 110744 Shadow 122121
 			{ 110744, jps.IsSpellKnown(110744) and playerIsInterrupt > 0 , "player" , "Interrupt_DivineStar_" },
+			-- "Circle of Healing" 34861
+			{ 34861, jps.buffId(81206) , "player" ,"COH_Player_Sanctuary_" },
 		},
 	},
 	
