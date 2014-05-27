@@ -227,7 +227,7 @@ local priestHolyPvP = function()
 -- "Holy Spark" 131567 "Etincelle sacrée" -- increases the healing done by your next Flash Heal, Greater Heal or Holy Word: Serenity by 50% for 10 sec.
 local InterruptTable = {
 	{priest.Spell.flashHeal, 0.75, false },
-	{priest.Spell.greaterHeal, 0.95, false },
+	{priest.Spell.greaterHeal, 0.90, false },
 	{priest.Spell.heal, 1 , false },
 	{priest.Spell.prayerOfHealing, 0.85, jps.MultiTarget or jps.buffId(81206)}
 }
@@ -327,15 +327,14 @@ local spellTable = {
 	-- "Guardian Spirit"
 	{ 47788, jps.FriendAggro(LowestImportantUnit) and LowestImportantUnitHpct < 0.40 , LowestImportantUnit },
 
-	-- "Spectral Guise" -- "Semblance spectrale" 108968 -- fast out of combat drinking
-	{ 112833, playerAggro and jps.IsSpellKnown(112833) , "player" , "Aggro_Spectral_" },
-
 	{ "nested", jps.hp("player") < priest.get("HealthEmergency")/100 and playerAggro ,
 		{
 			-- "Pierre de soins" 5512
 			{ {"macro","/use item:5512"}, select(1,IsUsableItem(5512))==1 and jps.itemCooldown(5512)==0 , "player" , "PIERRESOINS"},
 			-- "Prière du désespoir" 19236
 			{ 19236, select(2,GetSpellBookItemInfo(priest.Spell["Desesperate"]))~=nil , "player" , "DESESPERATE" },
+			-- "Spectral Guise" -- "Semblance spectrale" 108968 -- fast out of combat drinking
+			{ 112833, jps.IsSpellKnown(112833) , "player" , "Aggro_Spectral_" },
 			-- "Oubli" 586 -- Fantasme 108942 -- vous dissipez tous les effets affectant le déplacement sur vous-même et votre vitesse de déplacement ne peut être réduite pendant 5 s
 			-- "Oubli" 586 -- Glyphe d'ouble 55684 -- Votre technique Oubli réduit à présent tous les dégâts subis de 10%.
 			--{ 586, playerAggro and jps.IsSpellKnown(108942) , "player" , "Aggro_Oubli_" },
@@ -419,8 +418,8 @@ local spellTable = {
 	{ "nested", jps.FaceTarget and jps.buffId(81209) , parseDamage },
 
 	-- "Holy Word: Serenity" 88684 -- Chakra: Serenity 81208 -- LowestImportantUnitHealth > priest.AvgAmountFlashHeal
-	{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) and LowestImportantUnitHealth > priest.AvgAmountFlashHeal , LowestImportantUnit , "SERENITY_"..LowestImportantUnit },
-	{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) and jps.myBuffDuration(139,LowestImportantUnit) < 2 and jps.buff(139,LowestImportantUnit) , LowestImportantUnit , "Serenity_"..LowestImportantUnit},
+	{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) and LowestImportantUnitHealth > priest.AvgAmountFlashHeal , LowestImportantUnit , "Serenity_"..LowestImportantUnit },
+	{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) and jps.myBuffDuration(139,LowestImportantUnit) < 2 and jps.buff(139,LowestImportantUnit) , LowestImportantUnit , "Serenity_Renew_"..LowestImportantUnit},
 	-- "Don des naaru" 59544
 	{ 59544, (select(2,GetSpellBookItemInfo(priest.Spell["NaaruGift"]))~=nil) and LowestImportantUnitHealth > priest.AvgAmountFlashHeal , LowestImportantUnit , "Naaru_"..LowestImportantUnit },
 	-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)

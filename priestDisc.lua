@@ -218,9 +218,9 @@ local priestDiscPvP = function()
 
 local InterruptTable = {
 	{priest.Spell.flashHeal, 0.75, jps.buffId(priest.Spell.spiritShellBuild) or jps.buffId(priest.Spell.innerFocus) },
-	{priest.Spell.greaterHeal, 0.95, jps.buffId(priest.Spell.spiritShellBuild) },
+	{priest.Spell.greaterHeal, 0.90, jps.buffId(priest.Spell.spiritShellBuild) },
 	{priest.Spell.heal, 1 , jps.buffId(priest.Spell.spiritShellBuild) },
-	{priest.Spell.prayerOfHealing, 0.95, jps.buffId(priest.Spell.spiritShellBuild) or jps.buffId(priest.Spell.innerFocus) or jps.MultiTarget}
+	{priest.Spell.prayerOfHealing, 0.85, jps.buffId(priest.Spell.spiritShellBuild) or jps.buffId(priest.Spell.innerFocus) or jps.MultiTarget}
 }
 
 -- Avoid interrupt Channeling
