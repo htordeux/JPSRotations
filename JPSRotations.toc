@@ -1,0 +1,14 @@
+## Interface: 50400
+## Title: JPS Rotations
+## Notes: Protect your LUA.
+## Dependencies: JPS
+## SavedVariablesPerCharacter: mConfigData
+
+Lib\mconfig.lua
+Lib\bconfig.lua
+
+priestDisc.lua
+priestHoly.lua
+priestShadow.lua
+warriorFury.lua
+
