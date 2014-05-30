@@ -266,7 +266,7 @@ local InterruptTable = {
 	
 	parseControl = {
 		-- Chakra: Chastise 81209 -- Chakra: Sanctuary 81206 -- -- Chakra: Serenity 81208 -- Holy Word: Chastise 88625
-		{ {"macro",macroCancelaura}, (jps.buffId(81208) or jps.buffId(81206)) and (jps.cooldown(81208) == 0) and jps.checkTimer("Chastise") == 0 , rangedTarget  , "macroCancelaura" },
+		{ {"macro",macroCancelaura}, (jps.buffId(81208) or jps.buffId(81206)) and (jps.cooldown(81208) == 0 or jps.cooldown(81206) == 0) and jps.checkTimer("Chastise") == 0 , rangedTarget  , "macroCancelaura" },
 		{ 88625, not jps.buffId(81208) and not jps.buffId(81206) , rangedTarget  , "|cFFFF0000Chastise_NO_Chakra_"..rangedTarget },
 		{ 88625, jps.buffId(81209) , rangedTarget , "|cFFFF0000Chastise_Chakra_"..rangedTarget },
 		-- "Psychic Scream" "Cri psychique" 8122 -- FARMING OR PVP -- NOT PVE -- debuff same ID 8122
@@ -363,6 +363,12 @@ local spellTable = {
 			--{ 586, playerAggro and jps.glyphInfo(55684) , "player" , "Aggro_Oubli_" },
 			-- "Divine Star" Holy 110744 Shadow 122121
 			{ 110744, jps.IsSpellKnown(110744) and playerIsInterrupt > 0 , "player" , "Interrupt_DivineStar_" },
+			-- "Prière de guérison" 33076 -- TIMER POM -- UnitAffectingCombat("player") == 1
+			{ 33076, not jps.buff(33076) , "player" , "Aggro_Mending_Player" },
+			-- "Holy Word: Serenity" 88684 -- Chakra: Serenity 81208
+			{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) , "player" , "Aggro_Serenity_Player" },
+			-- "Soins rapides" 2061 "Holy Spark" 131567 "Etincelle sacrée" -- increases the healing done by your next Flash Heal, Greater Heal or Holy Word: Serenity by 50% for 10 sec.
+			{ 2061, jps.buff(131567) ,"player" , "Aggro_SoinsRapides_Holy Spark_Player" },
 		},
 	},
 	
