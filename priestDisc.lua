@@ -6,8 +6,8 @@
 -- mConfig:createConfig(titleText,addOn,key,slashCommands)
 priestConfig = mConfig:createConfig("priest Config","priestDisc","Default",{"/pd"})
 -- mConfig:addSlider(key, text, tooltip, minValue, maxValue, defaultValue,stepSize)
-priestConfig:addSlider("HealthEmergency", "HealthLoss Threshold Emergency" , " % Health Loss for Emergency Heal" , 35, 90, 80, 5)
-priestConfig:addSlider("HealthDPS", "HealthLoss Threshold DPS" , " % Health Loss for DPS EnemyUnit" , 50, 100, 80, 5)
+priestConfig:addSlider("HealthEmergency", "HealthLoss Threshold Emergency" , " % Health Loss for Emergency Heal" , 35, 90, 75, 5)
+priestConfig:addSlider("HealthDPS", "HealthLoss Threshold DPS" , " % Health Loss for DPS EnemyUnit" , 50, 100, 85, 5)
 priestConfig:addSlider("HealthRaid", "HealthLoss Threshold RAID" , " % Health Loss for Raid Heal" , 35, 90, 60, 5)
 
 -- testConfig:addCheckBox("checkTest", "CheckBox Text: ".. veryLongText, "CheckBox Tooltip Text", false)
@@ -185,14 +185,7 @@ local priestDiscPvP = function()
 			DeathEnemyTarget = unit
 		break end
 	end
-	
-	local FearEnemyTarget = nil
-	for _,unit in ipairs(EnemyUnit) do 
-		if priest.canFear(unit) and not jps.LoseControl(unit) then 
-			FearEnemyTarget = unit
-		break end
-	end
-	
+
 	local MassDispellTarget = nil
 	for _,unit in ipairs(EnemyUnit) do 
 		if jps.buff(divineshield,unit) then
@@ -287,16 +280,12 @@ local InterruptTable = {
 	}
 	
 	parseControl = {
-		-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
-		{ 6346, not jps.buff(6346,"player") , "player" },
 		-- "Psychic Scream" "Cri psychique" 8122 -- FARMING OR PVP -- NOT PVE -- debuff same ID 8122
-		{ 8122, priest.canFear(rangedTarget) and not jps.LoseControl(rangedTarget) , rangedTarget },
-		{ 8122, type(FearEnemyTarget) == "string" , FearEnemyTarget , "Fear_MultiUnit_" },
+		{ 8122, priest.canFear(rangedTarget) , rangedTarget },
 		-- "Psyfiend" 108921 Démon psychique
-		{ 108921, playerAggro and priest.canFear(rangedTarget) and not jps.LoseControl(rangedTarget) , rangedTarget },
+		{ 108921, playerAggro and priest.canFear(rangedTarget) , rangedTarget },
 		-- "Void Tendrils" 108920 -- debuff "Void Tendril's Grasp" 114404
-		{ 108920, playerAggro and priest.canFear(rangedTarget) and not jps.LoseControl(rangedTarget) , rangedTarget },
-
+		{ 108920, playerAggro and priest.canFear(rangedTarget) , rangedTarget },
 	}
 	
 	parseDispel = {
@@ -347,7 +336,7 @@ local InterruptTable = {
 	},
 
 	-- CONTROL -- "Psychic Scream" "Cri psychique" 8122 -- FARMING OR PVP -- NOT PVE -- debuff same ID 8122
-	{ "nested", true , parseControl },
+	{ "nested", not jps.LoseControl(rangedTarget) and canDPS(rangedTarget) , parseControl },
 
 	-- "Pénitence" 47540
 	{ 47540, LowestImportantUnitHealth > priest.AvgAmountGreatHeal , "Penance_"..LowestImportantUnit },	
@@ -459,6 +448,8 @@ local InterruptTable = {
 	-- "Soins supérieurs" 2060
 	{ 2060, not playerAggro and (LowestImportantUnitHealth > priest.AvgAmountGreatHeal) , LowestImportantUnit , "SoinsSup_"..LowestImportantUnit  },
 
+	-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
+	{ 6346, not jps.buff(6346,"player") , "player" },
 	-- "Feu intérieur" 588 -- "Volonté intérieure" 73413
 	{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player") }, -- "target" by default must must be a valid target
 	-- "Soins" 2050

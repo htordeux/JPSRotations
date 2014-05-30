@@ -326,6 +326,15 @@ local spellTable = {
 	return spell,target
 end, "Shadow Priest Custom", false, true)
 
+-- The only cap we deal with in pvp is the 6% Hit cap
+-- Haste > Crit > mastery
+-- Transforms your Shadowfiend and Mindbender into a Sha Beast. Not only on changing the aspect of your Shadowfiend/Mindbender, but also removing it from the gcd
+
+-- sPRIEST haste cap? 14873 + 3 ticks Shadow Word Pain(14846) and Devouring Plague(14873)
+-- there are two breakpoints that you can reach. The first is at 8,085 Haste Rating and earns you +1 tick to Vampiric Touch and +2 ticks to both Shadow Word Pain and Devouring Plague.
+-- The next breakpoint is at 10,124 Haste Rating and earns 2nd extra tick on Vampiric Touch.
+-- This is the most important Haste value to reach as it has a large impact on your DPS, but Haste beyond this point continues to remain quite valuable.
+-- 18200 is a 3 ticks Vampiric Touch breakpoint, 18215 is the haste cap (50%).
 
 -- Vampiric Embrace -- 3-minute cooldown with a 15-second duration. It causes all the single-target damage you deal to heal nearby allies for 50% of the damage
 -- Void Shift  -- allows you to swap health percentages with your target raid or party member. It can be used to save raid members, by trading your life with theirs, or to save yourself in the same way

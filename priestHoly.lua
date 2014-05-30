@@ -25,7 +25,9 @@ local divineshield = tostring(select(1,GetSpellInfo(642))) -- divine shield pala
 	local sanctuaryPOH = "/cast "..ChakraSanctuary.."\n".."/cast "..POH
 	local sanctuaryHymn = "/cast "..ChakraSanctuary.."\n".."/cast "..Hymn
 	local macroSerenity = "/cast "..Serenity
-	local macroChastise = "/cast "..ChakraChastise.."\n".."/cast "..Chastise
+	local macroChastise = "/cast "..Chastise
+	local macroCancelaura = "/cancelaura "..ChakraSerenity.."\n".."/cancelaura "..ChakraSanctuary -- takes 1 GCD
+	local macroCancelauraChastise = macroCancelaura.."\n"..macroChastise -- takes 2 GCD
 
 ---------------------------
 -- DEBUFF RBG
@@ -90,7 +92,7 @@ local priestHolyPvP = function()
 	local LowestImportantUnit = jps.LowestImportantUnit()
 	local LowestImportantUnitHealth = jps.hp(LowestImportantUnit,"abs") -- UnitHealthMax(unit) - UnitHealth(unit)
 	local LowestImportantUnitHpct = jps.hp(LowestImportantUnit) -- UnitHealth(unit) / UnitHealthMax(unit)
-	local POHTarget, groupToHeal, groupTableToHeal = jps.FindSubGroupTarget(0.75) -- Target to heal with POH in RAID with AT LEAST 3 RAID UNIT of the SAME GROUP IN RANGE
+	local POHTarget, groupToHeal, groupTableToHeal = jps.FindSubGroupTarget(priest.get("HealthRaid")/100) -- Target to heal with POH in RAID with AT LEAST 3 RAID UNIT of the SAME GROUP IN RANGE
 	local stackSerendip = jps.buffStacks(63735,"player")
 	
 ----------------------------
@@ -164,10 +166,15 @@ local priestHolyPvP = function()
 	end
 
 	local LeapFriend = nil
+	local LeapFriendFlag = nil 
 	for _,unit in ipairs(FriendUnit) do
-		if priest.unitForLeap(unit) and jps.FriendAggro(unit) then 
-			LeapFriend = unit
-		break end
+		if priest.unitForLeap(unit) and jps.FriendAggro(unit) then
+			if jps.buff(23335,unit) or jps.buff(23333,unit) then -- 23335/alliance-flag -- 23333/horde-flag 
+				LeapFriendFlag = unit
+			else
+				LeapFriend = unit
+			end
+		end
 	end
 
 ---------------------
@@ -204,13 +211,6 @@ local priestHolyPvP = function()
 		break end
 	end
 	
-	local FearEnemyTarget = nil
-	for _,unit in ipairs(EnemyUnit) do 
-		if priest.canFear(unit) and not jps.LoseControl(unit) then 
-			FearEnemyTarget = unit
-		break end
-	end
-	
 	local MassDispellTarget = nil
 	for _,unit in ipairs(EnemyUnit) do 
 		if jps.buff(divineshield,unit) then
@@ -226,8 +226,8 @@ local priestHolyPvP = function()
 
 -- "Holy Spark" 131567 "Etincelle sacrée" -- increases the healing done by your next Flash Heal, Greater Heal or Holy Word: Serenity by 50% for 10 sec.
 local InterruptTable = {
-	{priest.Spell.flashHeal, 0.75, false },
-	{priest.Spell.greaterHeal, 0.90, false },
+	{priest.Spell.flashHeal, 0.75, jps.buff(27827) },
+	{priest.Spell.greaterHeal, 0.90, jps.buff(27827) },
 	{priest.Spell.heal, 1 , false },
 	{priest.Spell.prayerOfHealing, 0.85, jps.MultiTarget or jps.buffId(81206)}
 }
@@ -265,20 +265,21 @@ local InterruptTable = {
 ------------------------
 	
 	parseControl = {
-		-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
-		{ 6346, not jps.buff(6346,"player") , "player" },
+		-- Chakra: Chastise 81209 -- Chakra: Sanctuary 81206 -- -- Chakra: Serenity 81208 -- Holy Word: Chastise 88625
+		{ {"macro",macroCancelaura}, (jps.buffId(81208) or jps.buffId(81206)) and (jps.cooldown(81208) == 0) and jps.checkTimer("Chastise") == 0 , rangedTarget  , "macroCancelaura" },
+		{ 88625, not jps.buffId(81208) and not jps.buffId(81206) , rangedTarget  , "|cFFFF0000Chastise_NO_Chakra_"..rangedTarget },
+		{ 88625, jps.buffId(81209) , rangedTarget , "|cFFFF0000Chastise_Chakra_"..rangedTarget },
 		-- "Psychic Scream" "Cri psychique" 8122 -- FARMING OR PVP -- NOT PVE -- debuff same ID 8122
-		{ 8122, priest.canFear(rangedTarget) and not jps.LoseControl(rangedTarget) , rangedTarget },
-		{ 8122, type(FearEnemyTarget) == "string" , FearEnemyTarget , "Fear_MultiUnit_" },
+		{ 8122, priest.canFear(rangedTarget) , rangedTarget },
 		-- "Psyfiend" 108921 Démon psychique
-		{ 108921, playerAggro and priest.canFear(rangedTarget) and not jps.LoseControl(rangedTarget) , rangedTarget },
+		{ 108921, playerAggro and priest.canFear(rangedTarget) , rangedTarget },
 		-- "Void Tendrils" 108920 -- debuff "Void Tendril's Grasp" 114404
-		{ 108920, playerAggro and priest.canFear(rangedTarget) and not jps.LoseControl(rangedTarget) , rangedTarget },
-
+		{ 108920, playerAggro and priest.canFear(rangedTarget) , rangedTarget },
 	}
 	
 	parseDispel = {
 		-- "Leap of Faith" 73325 -- "Saut de foi"
+		{ 73325 , type(LeapFriendFlag) == "string" , LeapFriendFlag , "|cff1eff00Leap_MultiUnit_" },
 		{ 73325 , type(LeapFriend) == "string" , LeapFriend , "|cff1eff00Leap_MultiUnit_" },
 		-- "Dispel" "Purifier" 527
 		{ 527, type(DispelTargetRole) == "string" , DispelTargetRole , "|cff1eff00DispelTargetRole_MultiUnit_" },
@@ -288,7 +289,7 @@ local InterruptTable = {
 	
 	parseDamage = {
 		-- Chakra: Chastise 81209
-		{ 81209, not jps.buffId(81209) , "player" },
+		{ 81209, not jps.buffId(81209) , "player" , "|cffa335eeChakra_Chastise" },
 		-- "Chastise" 88625 -- Chakra: Chastise 81209
 		{ 88625, jps.buffId(81209) , rangedTarget , "|cFFFF0000Chastise_"..rangedTarget },
 		-- "Mot de l'ombre : Mort" 32379 -- FARMING OR PVP -- NOT PVE
@@ -313,12 +314,33 @@ local InterruptTable = {
 	
 local spellTable = {
 
-	-- Chakra: Serenity 81208 -- "Holy Word: Serenity" 88684
-	{ 81208, not jps.buffId(81208) and LowestImportantUnitHpct < priest.get("HealthDPS")/100 , "player" , "Chakra: Serenity" },
-	{ 81208, not jps.buffId(81208) and not jps.FaceTarget , "player" , "Chakra: Serenity" },
+	-- "Esprit de rédemption" 27827/spirit-of-redemption
+	{ 2060, stackSerendip == 2 and jps.buff(27827) , LowestImportantUnit  },
+	{ 2061, jps.buff(27827) , LowestImportantUnit },
 
 	-- TRINKETS -- jps.useTrinket(0) est "Trinket0Slot" est slotId  13 -- "jps.useTrinket(1) est "Trinket1Slot" est slotId  14
 	{ jps.useTrinket(1), jps.UseCDs and jps.useTrinketBool(1) and playerIsStun , "player" },
+
+	-- CONTROL -- "Psychic Scream" "Cri psychique" 8122 -- FARMING OR PVP -- NOT PVE -- debuff same ID 8122
+	{ "nested", LowestImportantUnitHpct > 0.50 and not jps.LoseControl(rangedTarget) and canDPS(rangedTarget) , parseControl },
+	-- DISPEL	
+	{ "nested", LowestImportantUnitHpct > 0.50 , parseDispel },
+	-- OFFENSIVE Dispel -- "Dissipation de la magie" 528
+	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive(rangedTarget) and LowestImportantUnitHpct > 0.50 , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
+
+	-- "Mot de l'ombre : Mort" 32379 -- FARMING OR PVP -- NOT PVE
+	{ 32379, type(DeathEnemyTarget) == "string" , DeathEnemyTarget , "|cFFFF0000Death_MultiUnit_" },
+	{ 32379, priest.canShadowWordDeath(rangedTarget) , rangedTarget , "|cFFFF0000Death_Health_"..rangedTarget },
+	
+	-- Chakra: Serenity 81208 -- "Holy Word: Serenity" 88684 
+	{ 81208, not jps.buffId(81208) and LowestImportantUnitHpct < priest.get("HealthDPS")/100 and string.find(jps.LastMessage,"macroCancelaura") == nil , "player" , "|cffa335eeChakra_Serenity" },
+	{ 81208, not jps.buffId(81208) and not jps.FaceTarget and string.find(jps.LastMessage,"macroCancelaura") == nil , "player" , "|cffa335eeChakra_Serenity" },
+	
+	-- "Prière de guérison" 33076 -- TIMER POM -- UnitAffectingCombat("player") == 1
+	{ 33076, not jps.buffTracker(33076) and LowestImportantUnitHpct > 0.50 , LowestImportantUnit , "Tracker_Mending_"..LowestImportantUnit },
+	-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
+	{ 139, not jps.buffTracker(139) and LowestImportantUnitHpct > 0.50 , LowestImportantUnit , "Tracker_Renew_"..LowestImportantUnit },
+
 	-- "Soins rapides" 2061 "From Darkness, Comes Light" 109186 gives buff -- "Vague de Lumière" 114255 "Surge of Light"
 	{ 2061, jps.buff(114255) and (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) , LowestImportantUnit , "SoinsRapides_Light_"..LowestImportantUnit },
 	{ 2061, jps.buff(114255) and (jps.buffDuration(114255) < 4) , LowestImportantUnit , "SoinsRapides_Light_"..LowestImportantUnit },
@@ -327,7 +349,7 @@ local spellTable = {
 	-- "Guardian Spirit"
 	{ 47788, jps.FriendAggro(LowestImportantUnit) and LowestImportantUnitHpct < 0.40 , LowestImportantUnit },
 
-	{ "nested", jps.hp("player") < priest.get("HealthEmergency")/100 and playerAggro ,
+	{ "nested", jps.hp("player") < priest.get("HealthDPS")/100 and playerAggro ,
 		{
 			-- "Pierre de soins" 5512
 			{ {"macro","/use item:5512"}, select(1,IsUsableItem(5512))==1 and jps.itemCooldown(5512)==0 , "player" , "PIERRESOINS"},
@@ -341,11 +363,19 @@ local spellTable = {
 			--{ 586, playerAggro and jps.glyphInfo(55684) , "player" , "Aggro_Oubli_" },
 			-- "Divine Star" Holy 110744 Shadow 122121
 			{ 110744, jps.IsSpellKnown(110744) and playerIsInterrupt > 0 , "player" , "Interrupt_DivineStar_" },
-			-- "Circle of Healing" 34861
-			{ 34861, jps.buffId(81206) , "player" ,"COH_Player_Sanctuary_" },
 		},
 	},
 	
+	-- Chakra: Sanctuary 81206 -- Cast manually Sanctuary
+	{ "nested", jps.buffId(81206) ,
+		{
+			{ 34861, true , LowestImportantUnit },
+			{ 121135, jps.IsSpellKnown(121135) , LowestImportantUnit },
+			{ 64843, not playerAggro and AvgHealthLoss < 0.50  , "player" },
+			{ 596, (type(POHTarget) == "string") , POHTarget },
+		},
+	},
+
 	-- GROUP HEAL
 	{ "nested", CountInRange > 2 and AvgHealthLoss < priest.get("HealthDPS")/100 , 
 		{
@@ -353,30 +383,25 @@ local spellTable = {
 			{ 34861, true , LowestImportantUnit ,"COH_"..LowestImportantUnit },
 			-- "Cascade" Holy 121135
 			{ 121135, jps.IsSpellKnown(121135) , LowestImportantUnit },
+			-- "Divine Insight" 109175
+			{ 33076, jps.IsSpellKnown(109175) and jps.buff(109175), LowestImportantUnit },
 		},
 	},
 	
 	-- GROUP HEAL -- Chakra: Sanctuary 81206 -- jps.MultiTarget
-	{ "nested", (type(POHTarget) == "string") and jps.MultiTarget and LowestImportantUnitHpct > 0.25 ,
+	{ "nested", CountInRange > 2 and AvgHealthLoss < priest.get("HealthRaid")/100 and jps.MultiTarget and LowestImportantUnitHpct > 0.20 , 
 		{
-			-- "Divine Hymn" 64843
+			-- "Divine Hymn" 64843 -- Chakra: Sanctuary 81206
 			{ {"macro",sanctuaryHymn}, not playerAggro and not jps.buffId(81206) and jps.cooldown(81206) == 0 and jps.cooldown(64843) == 0 and AvgHealthLoss < 0.50 , "player" , "|cffa335eeSanctuary_HYMN"},
 			-- "Prayer of Healing" 596 -- Chakra: Sanctuary 81206 -- increase 25 % Prayer of Mending, Circle of Healing, Divine Star, Cascade, Halo, Divine Hymn
-			{ {"macro",sanctuaryPOH}, not jps.buffId(81206) and jps.cooldown(81206) == 0 and (type(POHTarget) == "string") , POHTarget , "|cffa335eeSanctuary_POH"},
+			{ {"macro",sanctuaryPOH}, not jps.buffId(81206) and jps.cooldown(81206) == 0 and (type(POHTarget) == "string") and jps.cooldown(596) == 0 , POHTarget , "|cffa335eeSanctuary_POH"},
 			{ 596, (type(POHTarget) == "string") , POHTarget },
 		},
 	},
-	
-	-- CONTROL -- "Psychic Scream" "Cri psychique" 8122 -- FARMING OR PVP -- NOT PVE -- debuff same ID 8122
-	{ "nested", LowestImportantUnitHpct > 0.50 , parseControl },
-	-- DISPEL	
-	{ "nested", LowestImportantUnitHpct > 0.50 , parseDispel },
-	-- OFFENSIVE Dispel -- "Dissipation de la magie" 528
-	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive(rangedTarget) and LowestImportantUnitHpct > 0.50 , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
 
 	{ "nested", LowestImportantUnitHpct < priest.get("HealthEmergency")/100 ,
 		{
-			-- "Holy Word: Serenity" 88684 -- Chakra: Serenity 81208 -- LowestImportantUnitHealth > priest.AvgAmountFlashHeal
+			-- "Holy Word: Serenity" 88684 -- Chakra: Serenity 81208
 			{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) , LowestImportantUnit , "Emergency_Serenity_"..LowestImportantUnit },
 			-- "Prière de guérison" 33076 -- buff 4P pvp aug. 50% soins 
 			{ 33076, (type(MendingTarget) == "string") , MendingTarget , "Emergency_MendingTarget_" },
@@ -385,13 +410,13 @@ local spellTable = {
 					-- "Soins rapides" 2061 "Holy Spark" 131567 "Etincelle sacrée" -- increases the healing done by your next Flash Heal, Greater Heal or Holy Word: Serenity by 50% for 10 sec.
 					{ 2061, jps.buff(131567,LowestImportantUnit) , LowestImportantUnit , "Emergency_SoinsRapides_Holy Spark_"..LowestImportantUnit },
 					-- "Soins supérieurs" 2060
-					{ 2060,  stackSerendip == 2 and (LowestImportantUnitHealth > priest.AvgAmountGreatHeal) , LowestImportantUnit , "Emergency_SoinsSup_"..LowestImportantUnit  },
+					{ 2060,  stackSerendip == 2 and (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) , LowestImportantUnit , "Emergency_SoinsSup_"..LowestImportantUnit  },
 					-- "Soins rapides" 2061
 					{ 2061, (LowestImportantUnitHpct < 0.40) , LowestImportantUnit , "Emergency_SoinsRapides_40%_"..LowestImportantUnit },
 					-- "Soins de lien"
 					{ 32546 , type(BindingHealTarget) == "string" , BindingHealTarget , "Emergency_Lien_" },
 					-- "Soins rapides" 2061
-					{ 2061, (LowestImportantUnitHealth > priest.AvgAmountGreatHeal) and stackSerendip < 2, "Emergency_SoinsRapides_"..LowestImportantUnit },
+					{ 2061, (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) and stackSerendip < 2, "Emergency_SoinsRapides_"..LowestImportantUnit },
 				},
 			},
 			-- "Power Word: Shield" 17 
@@ -404,36 +429,35 @@ local spellTable = {
 			{ 139, not jps.buff(139,LowestImportantUnit) and LowestImportantUnitHealth > priest.AvgAmountFlashHeal , LowestImportantUnit , "Emergency_Renew_"..LowestImportantUnit },
 		},
 	},
-
-	-- "Prière de guérison" 33076 -- TIMER POM -- UnitAffectingCombat("player") == 1
-	{ 33076, not jps.buffTracker(33076) , LowestImportantUnit , "Tracker_Mending_"..LowestImportantUnit },
-	-- "Divine Insight" 109175
-	{ 33076, jps.IsSpellKnown(109175) and jps.buff(109175), LowestImportantUnit },
-	-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
-	{ 139, not jps.buffTracker(139) , LowestImportantUnit , "Tracker_Renew_"..LowestImportantUnit },
-
+	
 	-- "Torve-esprit" 123040 -- "Ombrefiel" 34433 "Shadowfiend"
 	{ 34433, jps.mana("player") < 0.75 and priest.canShadowfiend(rangedTarget) , rangedTarget },
 	{ 123040, jps.mana("player") < 0.75 and priest.canShadowfiend(rangedTarget) , rangedTarget },
-
-	-- Chakra: Chastise 81209
-	{ "nested", jps.FaceTarget and jps.buffId(81209) , parseDamage },
-
+	
+	-- DAMAGE -- Chakra: Chastise 81209
+	{ "nested", jps.FaceTarget and canDPS(rangedTarget) and LowestImportantUnitHpct > priest.get("HealthDPS")/100 , parseDamage },
+	
 	-- "Holy Word: Serenity" 88684 -- Chakra: Serenity 81208 -- LowestImportantUnitHealth > priest.AvgAmountFlashHeal
 	{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) and LowestImportantUnitHealth > priest.AvgAmountFlashHeal , LowestImportantUnit , "Serenity_"..LowestImportantUnit },
-	{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) and jps.myBuffDuration(139,LowestImportantUnit) < 2 and jps.buff(139,LowestImportantUnit) , LowestImportantUnit , "Serenity_Renew_"..LowestImportantUnit},
-	-- "Don des naaru" 59544
-	{ 59544, (select(2,GetSpellBookItemInfo(priest.Spell["NaaruGift"]))~=nil) and LowestImportantUnitHealth > priest.AvgAmountFlashHeal , LowestImportantUnit , "Naaru_"..LowestImportantUnit },
-	-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
-	{ 139, not jps.buff(139,LowestImportantUnit) and LowestImportantUnitHealth > priest.AvgAmountFlashHeal , LowestImportantUnit , "Renew_"..LowestImportantUnit },
 	
-	-- DAMAGE
-	{ 81209, jps.FaceTarget and canDPS(rangedTarget) and LowestImportantUnitHpct > priest.get("HealthDPS")/100 and jps.buffTracker(33076) and not jps.buffId(81209) , "player" , "|cffa335eeChakra_Chastise"},
+	{ "nested", not jps.Moving , 
+		{
+			-- "Soins supérieurs" 2060
+			{ 2060,  stackSerendip == 2 and (LowestImportantUnitHealth > priest.AvgAmountGreatHeal) , LowestImportantUnit , "SoinsSup_"..LowestImportantUnit  },
+			-- "Soins de lien"
+			{ 32546 , type(BindingHealTarget) == "string" , BindingHealTarget , "Lien_" },					
+			-- "Soins rapides" 2061
+			{ 2061, (LowestImportantUnitHealth > priest.AvgAmountGreatHeal) and stackSerendip < 2, "SoinsRapides_"..LowestImportantUnit },
+		},
+	},
 
 	-- "Infusion de puissance" 10060 
 	{ 10060, not jps.buffId(10060,"player") and UnitAffectingCombat("player") == 1, "player" , "POWERINFUSION_" },
+	-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
+	{ 6346, not jps.buff(6346,"player") , "player" },
 	-- "Feu intérieur" 588 -- "Volonté intérieure" 73413
 	{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player") , "player" }, -- "target" by default must must be a valid target
+
 	-- "Soins" 2050
 	{ 2050, jps.buff(139,LowestImportantUnit) and LowestImportantUnitHealth > priest.AvgAmountHeal , LowestImportantUnit , "Soins_"..LowestImportantUnit },
 	
@@ -457,6 +481,8 @@ end
 
 jps.registerRotation("PRIEST","HOLY", priestHolyPvP, "Holy Priest Custom", false , true)
 
+-- Haste at least 12.51% (4721) preferably up to 16.66% (7082) cap
+-- to ensure we get additional ticks from HW: Sanctuary and the Glyphed Renew.
 
 -- Chakra: Serenity 81208
 -- Increases the healing done by your single-target healing spells by 25%
@@ -502,14 +528,30 @@ jps.registerRotation("PRIEST","HOLY", priestHolyPvP, "Holy Priest Custom", false
 /cast Chakra: Chastise
 /cast Chastise
 
-/cast Chakra: Holy Word: Serenity
-/cast Holy Word: Serenity
-
 /cast Chakra: Sanctuary
 /cast Divine Hymn
 
 #showtooltip Prayer of Mending
 /cast Chakra: Serenity
 /cast [target=mouseover,nomod,exists] Prayer of Mending; Prayer of Mending
+*
+When going for a chastise->fear, don't enter Chakra: Chastise. use a /cancelaura macro
+that way you can quickly re-enter your healing chakra after you have disoriented them
 
+#show Holy Word: Chastise
+/cancelaura Chakra: Chastise
+/cancelaura  Chakra: Sanctuary
+/cancelaura Chakra: Serenity
+/cast Holy Word: Chastise
+
+#showtooltip
+/cast [mod:shift] Chakra: Sanctuary; [nomod] Chakra: Serenity
+
+/cancelaura Chakra: Serenity
+/cancelaura Chakra: Sanctuary
+/cast [mod:shift] Chakra: Chastise
+
+#showtooltip Divine Hymn
+/cast Chakra: Sanctuary
+/cast Divine Hymn
 ]]
