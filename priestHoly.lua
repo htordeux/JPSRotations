@@ -266,7 +266,7 @@ local InterruptTable = {
 	
 	parseControl = {
 		-- Chakra: Chastise 81209 -- Chakra: Sanctuary 81206 -- -- Chakra: Serenity 81208 -- Holy Word: Chastise 88625
-		{ {"macro",macroCancelaura}, (jps.buffId(81208) or jps.buffId(81206)) and (jps.cooldown(81208) == 0 or jps.cooldown(81206) == 0) and jps.checkTimer("Chastise") == 0 , rangedTarget  , "macroCancelaura" },
+		{ {"macro",macroCancelaura}, (jps.buffId(81208) or jps.buffId(81206)) and (jps.cooldown(81208) == 0 or jps.cooldown(81206) == 0) and jps.checkTimer("Chastise") == 0 , rangedTarget  , "macroCancelaura_" },
 		{ 88625, not jps.buffId(81208) and not jps.buffId(81206) , rangedTarget  , "|cFFFF0000Chastise_NO_Chakra_"..rangedTarget },
 		{ 88625, jps.buffId(81209) , rangedTarget , "|cFFFF0000Chastise_Chakra_"..rangedTarget },
 		-- "Psychic Scream" "Cri psychique" 8122 -- FARMING OR PVP -- NOT PVE -- debuff same ID 8122
@@ -325,9 +325,39 @@ local spellTable = {
 	{ "nested", LowestImportantUnitHpct > 0.50 and not jps.LoseControl(rangedTarget) and canDPS(rangedTarget) , parseControl },
 	-- DISPEL	
 	{ "nested", LowestImportantUnitHpct > 0.50 , parseDispel },
+	
+	-- "Prière de guérison" 33076 -- TIMER POM -- UnitAffectingCombat("player") == 1
+	{ 33076, not jps.buffTracker(33076) and LowestImportantUnitHpct > 0.50 , LowestImportantUnit , "Tracker_Mending_"..LowestImportantUnit },
+	-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
+	{ 139, not jps.buffTracker(139) and LowestImportantUnitHpct > 0.50 , LowestImportantUnit , "Tracker_Renew_"..LowestImportantUnit },
+
+	-- GROUP HEAL -- Chakra: Sanctuary 81206 -- jps.MultiTarget
+	{ "nested", jps.MultiTarget and CountInRange > 2 and AvgHealthLoss < priest.get("HealthRaid")/100 and LowestImportantUnitHpct > 0.20 , 
+		{
+			-- "Divine Hymn" 64843 -- Chakra: Sanctuary 81206
+			{ {"macro",sanctuaryHymn}, not playerAggro and not jps.buffId(81206) and jps.cooldown(81206) == 0 and jps.cooldown(64843) == 0 and AvgHealthLoss < 0.50 , "player" , "|cffa335eeSanctuary_HYMN"},
+			-- "Circle of Healing" 34861
+			{ 34861, true , LowestImportantUnit ,"COH_"..LowestImportantUnit },
+			-- "Cascade" Holy 121135
+			{ 121135, jps.IsSpellKnown(121135) , LowestImportantUnit },
+			-- "Prayer of Healing" 596 -- Chakra: Sanctuary 81206 -- increase 25 % Prayer of Mending, Circle of Healing, Divine Star, Cascade, Halo, Divine Hymn
+			{ {"macro",sanctuaryPOH}, not jps.buffId(81206) and jps.cooldown(81206) == 0 and (type(POHTarget) == "string") and jps.cooldown(596) == 0 , POHTarget , "|cffa335eeSanctuary_POH"},
+			{ 596, (type(POHTarget) == "string") , POHTarget },
+		},
+	},
+
+	-- Chakra: Sanctuary 81206 -- Cast manually Sanctuary
+--	{ "nested", jps.MultiTarget and jps.buffId(81206) ,
+--		{
+--			{ 34861, true , LowestImportantUnit },
+--			{ 121135, jps.IsSpellKnown(121135) , LowestImportantUnit },
+--			{ 64843, not playerAggro and AvgHealthLoss < 0.50  , "player" },
+--			{ 596, (type(POHTarget) == "string") , POHTarget },
+--		},
+--	},
+	
 	-- OFFENSIVE Dispel -- "Dissipation de la magie" 528
 	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive(rangedTarget) and LowestImportantUnitHpct > 0.50 , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
-
 	-- "Mot de l'ombre : Mort" 32379 -- FARMING OR PVP -- NOT PVE
 	{ 32379, type(DeathEnemyTarget) == "string" , DeathEnemyTarget , "|cFFFF0000Death_MultiUnit_" },
 	{ 32379, priest.canShadowWordDeath(rangedTarget) , rangedTarget , "|cFFFF0000Death_Health_"..rangedTarget },
@@ -335,11 +365,6 @@ local spellTable = {
 	-- Chakra: Serenity 81208 -- "Holy Word: Serenity" 88684 
 	{ 81208, not jps.buffId(81208) and LowestImportantUnitHpct < priest.get("HealthDPS")/100 and string.find(jps.LastMessage,"macroCancelaura") == nil , "player" , "|cffa335eeChakra_Serenity" },
 	{ 81208, not jps.buffId(81208) and not jps.FaceTarget and string.find(jps.LastMessage,"macroCancelaura") == nil , "player" , "|cffa335eeChakra_Serenity" },
-	
-	-- "Prière de guérison" 33076 -- TIMER POM -- UnitAffectingCombat("player") == 1
-	{ 33076, not jps.buffTracker(33076) and LowestImportantUnitHpct > 0.50 , LowestImportantUnit , "Tracker_Mending_"..LowestImportantUnit },
-	-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
-	{ 139, not jps.buffTracker(139) and LowestImportantUnitHpct > 0.50 , LowestImportantUnit , "Tracker_Renew_"..LowestImportantUnit },
 
 	-- "Soins rapides" 2061 "From Darkness, Comes Light" 109186 gives buff -- "Vague de Lumière" 114255 "Surge of Light"
 	{ 2061, jps.buff(114255) and (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) , LowestImportantUnit , "SoinsRapides_Light_"..LowestImportantUnit },
@@ -371,16 +396,6 @@ local spellTable = {
 			{ 2061, jps.buff(131567) ,"player" , "Aggro_SoinsRapides_Holy Spark_Player" },
 		},
 	},
-	
-	-- Chakra: Sanctuary 81206 -- Cast manually Sanctuary
-	{ "nested", jps.buffId(81206) ,
-		{
-			{ 34861, true , LowestImportantUnit },
-			{ 121135, jps.IsSpellKnown(121135) , LowestImportantUnit },
-			{ 64843, not playerAggro and AvgHealthLoss < 0.50  , "player" },
-			{ 596, (type(POHTarget) == "string") , POHTarget },
-		},
-	},
 
 	-- GROUP HEAL
 	{ "nested", CountInRange > 2 and AvgHealthLoss < priest.get("HealthDPS")/100 , 
@@ -391,17 +406,6 @@ local spellTable = {
 			{ 121135, jps.IsSpellKnown(121135) , LowestImportantUnit },
 			-- "Divine Insight" 109175
 			{ 33076, jps.IsSpellKnown(109175) and jps.buff(109175), LowestImportantUnit },
-		},
-	},
-	
-	-- GROUP HEAL -- Chakra: Sanctuary 81206 -- jps.MultiTarget
-	{ "nested", CountInRange > 2 and AvgHealthLoss < priest.get("HealthRaid")/100 and jps.MultiTarget and LowestImportantUnitHpct > 0.20 , 
-		{
-			-- "Divine Hymn" 64843 -- Chakra: Sanctuary 81206
-			{ {"macro",sanctuaryHymn}, not playerAggro and not jps.buffId(81206) and jps.cooldown(81206) == 0 and jps.cooldown(64843) == 0 and AvgHealthLoss < 0.50 , "player" , "|cffa335eeSanctuary_HYMN"},
-			-- "Prayer of Healing" 596 -- Chakra: Sanctuary 81206 -- increase 25 % Prayer of Mending, Circle of Healing, Divine Star, Cascade, Halo, Divine Hymn
-			{ {"macro",sanctuaryPOH}, not jps.buffId(81206) and jps.cooldown(81206) == 0 and (type(POHTarget) == "string") and jps.cooldown(596) == 0 , POHTarget , "|cffa335eeSanctuary_POH"},
-			{ 596, (type(POHTarget) == "string") , POHTarget },
 		},
 	},
 

@@ -37,7 +37,7 @@ jps.registerRotation("PRIEST","SHADOW",function()
 local spell = nil
 local target = nil
 
-local CountInRange, AvgHealthLoss, FriendUnit = jps.CountInRaidStatus(0.90)
+local CountInRange, AvgHealthLoss, FriendUnit = jps.CountInRaidStatus(0.75)
 local playerIsInterrupt = jps.checkTimer("PlayerInterrupt")
 local playerhealth =  jps.hp("player","abs")
 local playerhealthpct = jps.hp("player")
@@ -91,7 +91,7 @@ end
 
 local SilenceEnemyTarget = nil
 for _,unit in ipairs(EnemyUnit) do 
-	if EnemyCaster(unit) and not jps.LoseControl(unit) then 
+	if EnemyCaster(unit) and not jps.LoseControl(unit) and jps.shouldKickLag(unit) then 
 		SilenceEnemyTarget = unit
 	break end
 end
@@ -185,35 +185,32 @@ if jps.ChannelTimeLeft() > 0 then return nil end
 -------------------------------------------------------------
 
 local parseControl = {
-	-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
-	{ 6346, not jps.buff(6346,"player") , "player" },
 	-- "Psychic Scream" "Cri psychique" 8122 -- FARMING OR PVP -- NOT PVE -- debuff same ID 8122
-	{ 8122, priest.canFear(rangedTarget) and not jps.LoseControl(rangedTarget) , rangedTarget , "Fear_"..rangedTarget },
-	{ 8122, type(FearEnemyTarget) == "string" , FearEnemyTarget , "Fear_MultiUnit_" },
-	-- "Psychic Horror" 64044 "Horreur psychique"
-	{ 64044, priest.canFear(rangedTarget) and not jps.LoseControl(rangedTarget) and Orbs > 0 , rangedTarget , "Psychic Horror_"..rangedTarget },
+	{ 8122, priest.canFear(rangedTarget) , rangedTarget , "Fear_"..rangedTarget },
+	-- "Psychic Horror" 64044 "Horreur psychique" -- 30 yd range
+	{ 64044, jps.canCast(64044,rangedTarget) and Orbs > 0 , rangedTarget , "Psychic Horror_"..rangedTarget },
 	-- "Silence" 15487
-	{ 15487, EnemyCaster(rangedTarget) and not jps.LoseControl(rangedTarget) , rangedTarget , "Silence_"..rangedTarget },
+	{ 15487, EnemyCaster(rangedTarget) , rangedTarget , "Silence_Caster_"..rangedTarget },
 	{ 15487, type(SilenceEnemyTarget) == "string" , SilenceEnemyTarget , "Silence_MultiUnit_" },
 	-- "Psyfiend" 108921 Démon psychique
-	{ 108921, playerAggro and priest.canFear(rangedTarget) and not jps.LoseControl(rangedTarget) , rangedTarget },
+	{ 108921, playerAggro and priest.canFear(rangedTarget) , rangedTarget },
 	-- "Void Tendrils" 108920 -- debuff "Void Tendril's Grasp" 114404
-	{ 108920, playerAggro and priest.canFear(rangedTarget) and not jps.LoseControl(rangedTarget) , rangedTarget },
+	{ 108920, playerAggro and priest.canFear(rangedTarget) , rangedTarget },
 }
 
 local parseHeal = {
 	-- "Prière du désespoir" 19236
-	{ 19236, playerhealthpct < 0.55 and select(2,GetSpellBookItemInfo(Desesperate))~=nil , "player" },
+	{ 19236, select(2,GetSpellBookItemInfo(Desesperate))~=nil , "player" },
 	-- "Pierre de soins" 5512
-	{ {"macro","/use item:5512"}, select(1,IsUsableItem(5512))==1 and jps.itemCooldown(5512)==0 , "player" },
+	{ {"macro","/use item:5512"}, select(1,IsUsableItem(5512))==1 and jps.itemCooldown(5512)==0 , "player" , "Healthstone_" },
 	-- "Vampiric Embrace" 15286
 	{ 15286, true , "player" },
 	-- "Power Word: Shield" 17	
-	{ 17, not jps.debuff(6788,"player") and not jps.buff(17,"player") , "player" }, -- Shield
+	{ 17, playerAggro and not jps.debuff(6788,"player") and not jps.buff(17,"player") , "player" },
 	-- "Renew" 139 Self heal when critical 
 	{ 139, not jps.buff(139,"player"), "player" },
 	-- "Prayer of Mending" "Prière de guérison" 33076 
-	{ 33076, not jps.buff(33076,"player") , "player" },
+	{ 33076, playerAggro and not jps.buff(33076,"player") , "player" },
 }
 
 local parseAggro = {
@@ -237,13 +234,12 @@ local spellTable = {
 	-- TRINKETS -- jps.useTrinket(0) est "Trinket0Slot" est slotId  13 -- "jps.useTrinket(1) est "Trinket1Slot" est slotId  14
 	{ jps.useTrinket(1), jps.UseCDs and jps.useTrinketBool(1) and playerIsStun , "player" },
 	
-	{ "nested", jps.PvP , parseControl },
+	{ "nested", not jps.LoseControl(rangedTarget) , parseControl },
 	{ "nested", playerAggro , parseAggro },
 
 	-- "Void Shift" 108968
 	--{ 108968, type(VoidShiftFriend) == "string" , VoidShiftFriend , "Emergency_VoidShift_" },
-	-- "Cascade" Holy 121135 Shadow 127632
-	{ 127632, EnemyCount > 2 and priest.get("Cascade") , rangedTarget , "Cascade_"  },
+
 	-- "Divine Star" Holy 110744 Shadow 122121
 	{ 122121, playerIsInterrupt > 0 , "player" , "Interrupt_DivineStar_" },
 	-- "Devouring Plague" 2944
@@ -254,13 +250,19 @@ local spellTable = {
 	{ 8092, (jps.buffStacks(81292) == 2) , rangedTarget , "Blast" },
 	-- "Mind Blast" 8092 -- "Divine Insight" 109175 gives buff 124430 Attaque mentale est instantanée et ne coûte pas de mana.
 	{ 8092, jps.buff(124430) , rangedTarget , "Divine Insight" }, -- "Divine Insight" Clairvoyance divine 109175
+	-- "Mind Blast" 8092
+	{ 8092, not jps.Moving , rangedTarget },
 	-- "Mind Spike" 73510 -- "From Darkness, Comes Light" 109186 gives BUFF -- "Surge of Darkness" 87160
 	{ 73510, jps.buff(87160) , rangedTarget }, -- buff 87160 "Surge of Darkness"
 	-- "Shadow Word: Death " "Mot de l'ombre : Mort" 32379
 	{ 32379, jps.hp(rangedTarget) < 0.20 , rangedTarget, "castDeath_"..rangedTarget },
 	{ 32379, type(DeathEnemyTarget) == "string" , DeathEnemyTarget , "Death_MultiUnit_" },
+	-- "Cascade" Holy 121135 Shadow 127632
+	{ 127632, EnemyCount > 2 and priest.get("Cascade") , rangedTarget , "Cascade_"  },
 
 	{ "nested", playerhealthpct < 0.75 , parseHeal },
+	-- "Vampiric Embrace" 15286
+	{ 15286, CountInRange > 1 , "player" },
 
 	{ "nested", jps.Interrupts ,
 		{
@@ -275,8 +277,7 @@ local spellTable = {
 		},
 	},
 
-	-- "Mind Blast" 8092
-	{ 8092, true , rangedTarget },
+
 	-- "Dispersion" 47585
 	{ 47585, (UnitPower ("player",0)/UnitPowerMax ("player",0) < 0.50) and jps.cooldown(8092) > 6 , "player" , "Dispersion_Mana" },
 	-- "Mindbender" "Torve-esprit" 123040 -- "Ombrefiel" 34433 "Shadowfiend"
@@ -316,6 +317,8 @@ local spellTable = {
 	-- "Vampiric Touch" 34914 
 	{ 34914, UnitHealth(rangedTarget) > 120000 and not jps.myDebuff(34914,rangedTarget) and (jps.CurrentCast ~= VampTouch or jps.LastCast ~= VampTouch) , rangedTarget },
 
+	-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
+	{ 6346, not jps.buff(6346,"player") , "player" },
 	-- "Inner Fire" 588 Keep Inner Fire up 
 	{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player"), "player" }, -- "Volonté intérieure" 73413
 	-- "Mind Flay" 15407
@@ -325,6 +328,8 @@ local spellTable = {
 	spell,target = parseSpellTable(spellTable)
 	return spell,target
 end, "Shadow Priest Custom", false, true)
+
+-- "Plume angélique" 121536 gives buff 121557 -- local charge = GetSpellCharges(121536)
 
 -- The only cap we deal with in pvp is the 6% Hit cap
 -- Haste > Crit > mastery
