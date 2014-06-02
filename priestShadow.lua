@@ -69,8 +69,18 @@ local playerControlled = jps.LoseControl("player",{"CC"})
 local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
 local EnemyCount = jps.RaidEnemyCount()
 
-if canDPS("mouseover") and jps.RoleClass("mouseover") == "HEALER" then rangedTarget = "mouseover"
-elseif canDPS("target") then rangedTarget =  "target"
+	if jps.UnitExists("mouseover") and not jps.UnitExists("focus") and canDPS("mouseover") then
+		if jps.RoleClass("mouseover") == "HEALER" then
+			jps.Macro("/focus mouseover")
+			--SetRaidTarget("focus", 8)
+		end
+	end
+	if not canDPS("focus") then
+		--SetRaidTarget("focus", 0)
+		jps.Macro("/clearfocus")
+	end
+
+if canDPS("target") then rangedTarget =  "target"
 elseif canDPS("targettarget") then rangedTarget = "targettarget"
 elseif canDPS("focustarget") then rangedTarget = "focustarget"
 elseif canDPS("mouseover") then rangedTarget = "mouseover"
@@ -105,7 +115,7 @@ end
 
 local PainEnemyTarget = nil
 for _,unit in ipairs(EnemyUnit) do 
-	if not jps.myDebuff(589,unit) and (jps.CurrentCast ~= ShadowPain or jps.LastCast ~= ShadowPain) then 
+	if not jps.myDebuff(589,unit) and (jps.CurrentCast ~= ShadowPain or jps.LastCast ~= ShadowPain or jps.SentCast ~= ShadowPain ) then 
 		PainEnemyTarget = unit
 	break end
 end
@@ -288,9 +298,9 @@ local spellTable = {
 	{ "nested", jps.Moving ,
 		{
 			-- "Shadow Word: Pain" 589 Keep SW:P up with duration
-			{ 589, jps.myDebuff(589,rangedTarget) and jps.myDebuffDuration(589,rangedTarget) < 2 and (jps.CurrentCast ~= ShadowPain or jps.LastCast ~= ShadowPain) , rangedTarget , "Move_Pain_Expire_"..rangedTarget },
+			{ 589, jps.myDebuff(589,rangedTarget) and jps.myDebuffDuration(589,rangedTarget) < 2 and (jps.CurrentCast ~= ShadowPain or jps.LastCast ~= ShadowPain or jps.SentCast ~= ShadowPain) , rangedTarget , "Move_Pain_Expire_"..rangedTarget },
 			-- "Shadow Word: Pain" 589 Keep up
-			{ 589, (not jps.myDebuff(589,rangedTarget)) and (jps.CurrentCast ~= ShadowPain or jps.LastCast ~= ShadowPain) , rangedTarget , "Move_Pain_New_"..rangedTarget},
+			{ 589, (not jps.myDebuff(589,rangedTarget)) and (jps.CurrentCast ~= ShadowPain or jps.LastCast ~= ShadowPain or jps.SentCast ~= ShadowPain) , rangedTarget , "Move_Pain_New_"..rangedTarget},
 		}
 	},
 	
@@ -309,9 +319,9 @@ local spellTable = {
 
 	-- APPLY and MAINTAIN Shadow Word: Pain and Vampiric Touch
 	-- "Shadow Word: Pain" 589 Keep SW:P up with duration
-	{ 589, jps.myDebuff(589,rangedTarget) and jps.myDebuffDuration(589,rangedTarget) < 2 and (jps.CurrentCast ~= ShadowPain or jps.LastCast ~= ShadowPain) , rangedTarget , "Pain_Expire_"..rangedTarget },
+	{ 589, jps.myDebuff(589,rangedTarget) and jps.myDebuffDuration(589,rangedTarget) < 2 and (jps.CurrentCast ~= ShadowPain or jps.LastCast ~= ShadowPain or jps.SentCast ~= ShadowPain) , rangedTarget , "Pain_Expire_"..rangedTarget },
 	-- "Shadow Word: Pain" 589
-	{ 589, not jps.myDebuff(589,rangedTarget) and (jps.CurrentCast ~= ShadowPain or jps.LastCast ~= ShadowPain) , rangedTarget , "Pain_New_"..rangedTarget },
+	{ 589, not jps.myDebuff(589,rangedTarget) and (jps.CurrentCast ~= ShadowPain or jps.LastCast ~= ShadowPain or jps.SentCast ~= ShadowPain) , rangedTarget , "Pain_New_"..rangedTarget },
 	-- "Vampiric Touch" 34914 Keep VT up with duration
 	{ 34914, UnitHealth(rangedTarget) > 120000 and jps.myDebuff(34914,rangedTarget) and jps.myDebuffDuration(34914,rangedTarget) < 2.2 and (jps.CurrentCast ~= VampTouch or jps.LastCast ~= VampTouch) , rangedTarget },
 	-- "Vampiric Touch" 34914 
@@ -329,7 +339,7 @@ local spellTable = {
 	return spell,target
 end, "Shadow Priest Custom", false, true)
 
--- "Plume angélique" 121536 gives buff 121557 -- local charge = GetSpellCharges(121536)
+-- "Plume angélique" 121536 Angelic Feather gives buff 121557 -- local charge = GetSpellCharges(121536)
 
 -- The only cap we deal with in pvp is the 6% Hit cap
 -- Haste > Crit > mastery

@@ -17,6 +17,7 @@ local divineshield = tostring(select(1,GetSpellInfo(642))) -- divine shield pala
 	local Hymn = tostring(select(1,GetSpellInfo(64843))) -- "Divine Hymn" 64843
 	local Serenity = tostring(select(1,GetSpellInfo(88684))) -- "Holy Word: Serenity" 88684
 	local Chastise = tostring(select(1,GetSpellInfo(88625))) -- Holy Word: Chastise 88625
+	local Santuary = tostring(select(1,GetSpellInfo(88685))) -- Holy Word: Sanctuary 88685
 
 	local ChakraSanctuary = tostring(select(1,GetSpellInfo(81206))) -- Chakra: Sanctuary 81206
 	local ChakraChastise = tostring(select(1,GetSpellInfo(81209))) -- Chakra: Chastise 81209
@@ -226,8 +227,8 @@ local priestHolyPvP = function()
 
 -- "Holy Spark" 131567 "Etincelle sacrée" -- increases the healing done by your next Flash Heal, Greater Heal or Holy Word: Serenity by 50% for 10 sec.
 local InterruptTable = {
-	{priest.Spell.flashHeal, 0.75, jps.buff(27827) },
-	{priest.Spell.greaterHeal, 0.90, jps.buff(27827) },
+	{priest.Spell.flashHeal, priest.get("HealthEmergency")/100 , jps.buff(27827) },
+	{priest.Spell.greaterHeal, priest.get("HealthDPS")/100 , jps.buff(27827) },
 	{priest.Spell.heal, 1 , false },
 	{priest.Spell.prayerOfHealing, 0.85, jps.MultiTarget or jps.buffId(81206)}
 }
@@ -265,7 +266,7 @@ local InterruptTable = {
 ------------------------
 	
 	parseControl = {
-		-- Chakra: Chastise 81209 -- Chakra: Sanctuary 81206 -- -- Chakra: Serenity 81208 -- Holy Word: Chastise 88625
+		-- Chakra: Chastise 81209 -- Chakra: Sanctuary 81206 -- Chakra: Serenity 81208 -- Holy Word: Chastise 88625
 		{ {"macro",macroCancelaura}, (jps.buffId(81208) or jps.buffId(81206)) and (jps.cooldown(81208) == 0 or jps.cooldown(81206) == 0) and jps.checkTimer("Chastise") == 0 , rangedTarget  , "macroCancelaura_" },
 		{ 88625, not jps.buffId(81208) and not jps.buffId(81206) , rangedTarget  , "|cFFFF0000Chastise_NO_Chakra_"..rangedTarget },
 		{ 88625, jps.buffId(81209) , rangedTarget , "|cFFFF0000Chastise_Chakra_"..rangedTarget },
@@ -311,12 +312,23 @@ local InterruptTable = {
 ------------------------
 -- SPELL TABLE ---------
 ------------------------
+
+-- Set Holy Word: Sanctuary 88685 as NextSpell if I cast manually Chakra Sanctuary
+	if jps.buffId(81206) and jps.cooldown(88685) == 0 then jps.NextSpell = Santuary end
 	
 local spellTable = {
 
 	-- "Esprit de rédemption" 27827/spirit-of-redemption
-	{ 2060, stackSerendip == 2 and jps.buff(27827) , LowestImportantUnit  },
-	{ 2061, jps.buff(27827) , LowestImportantUnit },
+	{ "nested", jps.buff(27827) , 
+		{
+			-- "Divine Hymn" 64843
+			{ 64843, jps.buff(27827) and AvgHealthLoss < priest.get("HealthDPS")/100  , "player" },
+			-- "Circle of Healing" 34861
+			{ 34861, true , LowestImportantUnit },
+			{ 2060, stackSerendip == 2 and jps.buff(27827) , LowestImportantUnit  },
+			{ 2061, jps.buff(27827) , LowestImportantUnit },
+		},
+	},
 
 	-- TRINKETS -- jps.useTrinket(0) est "Trinket0Slot" est slotId  13 -- "jps.useTrinket(1) est "Trinket1Slot" est slotId  14
 	{ jps.useTrinket(1), jps.UseCDs and jps.useTrinketBool(1) and playerIsStun , "player" },
@@ -327,9 +339,7 @@ local spellTable = {
 	{ "nested", LowestImportantUnitHpct > 0.50 , parseDispel },
 	
 	-- "Prière de guérison" 33076 -- TIMER POM -- UnitAffectingCombat("player") == 1
-	{ 33076, not jps.buffTracker(33076) and LowestImportantUnitHpct > 0.50 , LowestImportantUnit , "Tracker_Mending_"..LowestImportantUnit },
-	-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
-	{ 139, not jps.buffTracker(139) and LowestImportantUnitHpct > 0.50 , LowestImportantUnit , "Tracker_Renew_"..LowestImportantUnit },
+	{ 33076, not jps.buffTracker(33076) , LowestImportantUnit , "Tracker_Mending_"..LowestImportantUnit },
 
 	-- GROUP HEAL -- Chakra: Sanctuary 81206 -- jps.MultiTarget
 	{ "nested", jps.MultiTarget and CountInRange > 2 and AvgHealthLoss < priest.get("HealthRaid")/100 and LowestImportantUnitHpct > 0.20 , 
@@ -373,7 +383,18 @@ local spellTable = {
 	{ 108968, not playerAggro and UnitIsUnit(LowestImportantUnit,"player")~=1 and LowestImportantUnitHpct < 0.40 and jps.hp("player") > 0.85 , LowestImportantUnit , "Emergency_VoidShift_"..LowestImportantUnit },
 	-- "Guardian Spirit"
 	{ 47788, jps.FriendAggro(LowestImportantUnit) and LowestImportantUnitHpct < 0.40 , LowestImportantUnit },
-
+	-- "Holy Spark" 131567 "Etincelle sacrée" -- increases the healing done by your next Flash Heal, Greater Heal or Holy Word: Serenity by 50% for 10 sec.
+	{ "nested", jps.buff(131567,LowestImportantUnit) and LowestImportantUnitHpct < priest.get("HealthEmergency")/100 , 
+		{
+			-- "Holy Word: Serenity" 88684 -- Chakra: Serenity 81208
+			{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) , LowestImportantUnit },
+			-- "Soins supérieurs" 2060
+			{ 2060,  stackSerendip == 2 , LowestImportantUnit },
+			-- "Soins rapides" 2061
+			{ 2061, stackSerendip < 2 , LowestImportantUnit },
+		},
+	},
+	
 	{ "nested", jps.hp("player") < priest.get("HealthDPS")/100 and playerAggro ,
 		{
 			-- "Pierre de soins" 5512
@@ -417,16 +438,14 @@ local spellTable = {
 			{ 33076, (type(MendingTarget) == "string") , MendingTarget , "Emergency_MendingTarget_" },
 			{ "nested", not jps.Moving , 
 				{
-					-- "Soins rapides" 2061 "Holy Spark" 131567 "Etincelle sacrée" -- increases the healing done by your next Flash Heal, Greater Heal or Holy Word: Serenity by 50% for 10 sec.
-					{ 2061, jps.buff(131567,LowestImportantUnit) , LowestImportantUnit , "Emergency_SoinsRapides_Holy Spark_"..LowestImportantUnit },
 					-- "Soins supérieurs" 2060
-					{ 2060,  stackSerendip == 2 and (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) , LowestImportantUnit , "Emergency_SoinsSup_"..LowestImportantUnit  },
+					{ 2060,  stackSerendip == 2 , LowestImportantUnit , "Emergency_SoinsSup_"..LowestImportantUnit  },
 					-- "Soins rapides" 2061
 					{ 2061, (LowestImportantUnitHpct < 0.40) , LowestImportantUnit , "Emergency_SoinsRapides_40%_"..LowestImportantUnit },
 					-- "Soins de lien"
 					{ 32546 , type(BindingHealTarget) == "string" , BindingHealTarget , "Emergency_Lien_" },
 					-- "Soins rapides" 2061
-					{ 2061, (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) and stackSerendip < 2, "Emergency_SoinsRapides_"..LowestImportantUnit },
+					{ 2061, stackSerendip < 2, "Emergency_SoinsRapides_"..LowestImportantUnit },
 				},
 			},
 			-- "Power Word: Shield" 17 
@@ -434,26 +453,28 @@ local spellTable = {
 			-- "Circle of Healing" 34861
 			{ 34861, AvgHealthLoss < priest.get("HealthDPS")/100 , LowestImportantUnit , "Emergency__COH_"..LowestImportantUnit },
 			-- "Don des naaru" 59544
-			{ 59544, (select(2,GetSpellBookItemInfo(priest.Spell["NaaruGift"]))~=nil) and LowestImportantUnitHealth > priest.AvgAmountFlashHeal , LowestImportantUnit , "Emergency_Naaru_"..LowestImportantUnit },
+			{ 59544, (select(2,GetSpellBookItemInfo(priest.Spell["NaaruGift"]))~=nil) , LowestImportantUnit , "Emergency_Naaru_"..LowestImportantUnit },
 			-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
-			{ 139, not jps.buff(139,LowestImportantUnit) and LowestImportantUnitHealth > priest.AvgAmountFlashHeal , LowestImportantUnit , "Emergency_Renew_"..LowestImportantUnit },
+			{ 139, not jps.buff(139,LowestImportantUnit) , LowestImportantUnit , "Emergency_Renew_"..LowestImportantUnit },
 		},
 	},
 	
 	-- "Torve-esprit" 123040 -- "Ombrefiel" 34433 "Shadowfiend"
 	{ 34433, jps.mana("player") < 0.75 and priest.canShadowfiend(rangedTarget) , rangedTarget },
 	{ 123040, jps.mana("player") < 0.75 and priest.canShadowfiend(rangedTarget) , rangedTarget },
+	-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
+	{ 139, not jps.buffTracker(139) , LowestImportantUnit , "Tracker_Renew_"..LowestImportantUnit },
 	
 	-- DAMAGE -- Chakra: Chastise 81209
 	{ "nested", jps.FaceTarget and canDPS(rangedTarget) and LowestImportantUnitHpct > priest.get("HealthDPS")/100 , parseDamage },
-	
-	-- "Holy Word: Serenity" 88684 -- Chakra: Serenity 81208 -- LowestImportantUnitHealth > priest.AvgAmountFlashHeal
-	{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) and LowestImportantUnitHealth > priest.AvgAmountFlashHeal , LowestImportantUnit , "Serenity_"..LowestImportantUnit },
+
+	-- "Holy Word: Serenity" 88684 -- Chakra: Serenity 81208
+	{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) and (LowestImportantUnitHealth > priest.AvgAmountGreatHeal) , LowestImportantUnit , "Serenity_"..LowestImportantUnit },
 	
 	{ "nested", not jps.Moving , 
 		{
 			-- "Soins supérieurs" 2060
-			{ 2060,  stackSerendip == 2 and (LowestImportantUnitHealth > priest.AvgAmountGreatHeal) , LowestImportantUnit , "SoinsSup_"..LowestImportantUnit  },
+			{ 2060,  (stackSerendip == 2) and (LowestImportantUnitHealth > priest.AvgAmountGreatHeal) , LowestImportantUnit , "SoinsSup_"..LowestImportantUnit  },
 			-- "Soins de lien"
 			{ 32546 , type(BindingHealTarget) == "string" , BindingHealTarget , "Lien_" },					
 			-- "Soins rapides" 2061
