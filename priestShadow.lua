@@ -68,17 +68,17 @@ local playerControlled = jps.LoseControl("player",{"CC"})
 
 local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
 local EnemyCount = jps.RaidEnemyCount()
-
-	if jps.UnitExists("mouseover") and not jps.UnitExists("focus") and canDPS("mouseover") then
-		if jps.RoleClass("mouseover") == "HEALER" then
-			jps.Macro("/focus mouseover")
-			--SetRaidTarget("focus", 8)
-		end
+-- set focus an enemy targeting you
+if jps.UnitExists("mouseover") and not jps.UnitExists("focus") then
+	if jps.UnitIsUnit("mouseovertarget","player") then
+		jps.Macro("/focus mouseover")
+		--SetRaidTarget("focus", 8)
 	end
-	if not canDPS("focus") then
-		--SetRaidTarget("focus", 0)
-		jps.Macro("/clearfocus")
-	end
+end
+if not canDPS("focus") then
+	jps.Macro("/clearfocus")
+	--SetRaidTarget("focus", 0)
+end
 
 if canDPS("target") then rangedTarget =  "target"
 elseif canDPS("targettarget") then rangedTarget = "targettarget"
