@@ -72,12 +72,10 @@ local EnemyCount = jps.RaidEnemyCount()
 if jps.UnitExists("mouseover") and not jps.UnitExists("focus") then
 	if jps.UnitIsUnit("mouseovertarget","player") then
 		jps.Macro("/focus mouseover")
-		--SetRaidTarget("focus", 8)
 	end
 end
 if not canDPS("focus") then
 	jps.Macro("/clearfocus")
-	--SetRaidTarget("focus", 0)
 end
 
 if canDPS("target") then rangedTarget =  "target"
