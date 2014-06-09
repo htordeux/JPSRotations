@@ -218,7 +218,6 @@ local priestHolyPvP = function()
 		if jps.buff(divineshield,unit) then
 			MassDispellTarget = unit
 			jps.Macro("/target "..MassDispellTarget)
-			table.insert(jps.MessageInfo,1,{true,"PALADIN"})
 		break end
 	end
 
@@ -245,7 +244,7 @@ local InterruptTable = {
 	
 	parseControl = {
 		-- Chakra: Chastise 81209 -- Chakra: Sanctuary 81206 -- Chakra: Serenity 81208 -- Holy Word: Chastise 88625
-		{ {"macro",macroCancelaura}, (jps.buffId(81208) or jps.buffId(81206)) and (jps.cooldown(81208) == 0 or jps.cooldown(81206) == 0) and jps.checkTimer("Chastise") == 0 , rangedTarget  , "macroCancelaura_" },
+		{ {"macro",macroCancelaura}, (jps.buffId(81208) or jps.buffId(81206)) and (jps.cooldown(81208) == 0 or jps.cooldown(81206) == 0) and jps.checkTimer("Chastise") == 0 and canDPS(rangedTarget) , rangedTarget  , "Cancelaura_Chakra_" },
 		{ 88625, not jps.buffId(81208) and not jps.buffId(81206) and canDPS("focus") , "focus"  , "|cFFFF0000Chastise_NO_Chakra_".."focus" },
 		{ 88625, not jps.buffId(81208) and not jps.buffId(81206) , rangedTarget  , "|cFFFF0000Chastise_NO_Chakra_"..rangedTarget },
 		{ 88625, jps.buffId(81209) , rangedTarget , "|cFFFF0000Chastise_Chakra_"..rangedTarget },
@@ -276,16 +275,16 @@ local InterruptTable = {
 		{ 32379, type(DeathEnemyTarget) == "string" , DeathEnemyTarget , "|cFFFF0000Death_MultiUnit_" },
 		{ 32379, priest.canShadowWordDeath(rangedTarget) , rangedTarget , "|cFFFF0000Death_Health_"..rangedTarget },
 		-- "Flammes sacrées" 14914
-		{ 14914, true , rangedTarget , "|cFFFF0000Flammes_"..rangedTarget },
+		{ 14914, true , rangedTarget },
 		-- "Mot de pouvoir : Réconfort" -- "Power Word: Solace" 129250 -- REGEN MANA
-		{ 129250, true , rangedTarget, "|cFFFF0000Solace_"..rangedTarget },
+		{ 129250, true , rangedTarget },
 		-- "Mot de l'ombre : Mort" 32379 -- FARMING OR PVP -- NOT PVE
-		{ 32379, type(DeathEnemyTarget) == "string" , DeathEnemyTarget , "|cFFFF0000Death_MultiUnit_" },
-		{ 32379, priest.canShadowWordDeath(rangedTarget) , rangedTarget , "|cFFFF0000Death_Health_"..rangedTarget },
+		{ 32379, type(DeathEnemyTarget) == "string" , DeathEnemyTarget  },
+		{ 32379, priest.canShadowWordDeath(rangedTarget) , rangedTarget  },
 		-- "Mot de l'ombre: Douleur" 589 -- FARMING OR PVP -- NOT PVE -- Only if 1 targeted enemy 
-		{ 589, priest.get("ShadowPain") and TargetCount == 1 and jps.myDebuffDuration(589,rangedTarget) == 0 , rangedTarget , "|cFFFF0000Douleur_"..rangedTarget },
+		{ 589, priest.get("ShadowPain") and TargetCount == 1 and jps.myDebuffDuration(589,rangedTarget) == 0 , rangedTarget  },
 		-- "Châtiment" 585
-		{ 585, not jps.Moving and priest.get("Chastise") , rangedTarget , "|cFFFF0000Chatiment_"..rangedTarget },
+		{ 585, not jps.Moving and priest.get("Chastise") , rangedTarget  },
 	}
 
 ------------------------
@@ -345,15 +344,18 @@ local spellTable = {
 --		},
 --	},
 	
+	-- "Mass Dispel" 32375 "Dissipation de masse"
+	--{ 32375 , type(MassDispellTarget) == "string" , MassDispellTarget , "|cff1eff00MassDispell_MultiUnit_" },
 	-- OFFENSIVE Dispel -- "Dissipation de la magie" 528
 	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive(rangedTarget) and LowestImportantUnitHpct > 0.50 , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
 	-- "Mot de l'ombre : Mort" 32379 -- FARMING OR PVP -- NOT PVE
 	{ 32379, type(DeathEnemyTarget) == "string" , DeathEnemyTarget , "|cFFFF0000Death_MultiUnit_" },
 	{ 32379, priest.canShadowWordDeath(rangedTarget) , rangedTarget , "|cFFFF0000Death_Health_"..rangedTarget },
 	
-	-- Chakra: Serenity 81208 -- "Holy Word: Serenity" 88684 
-	{ 81208, not jps.buffId(81208) and LowestImportantUnitHpct < priest.get("HealthDPS")/100 and string.find(jps.LastMessage,"macroCancelaura") == nil , "player" , "|cffa335eeChakra_Serenity" },
-	{ 81208, not jps.buffId(81208) and not jps.FaceTarget and string.find(jps.LastMessage,"macroCancelaura") == nil , "player" , "|cffa335eeChakra_Serenity" },
+	-- Chakra: Serenity 81208 -- "Holy Word: Serenity" 88684
+	{ 81208, not jps.buffId(81208) and jps.FinderLastMessage("Chastise_NO") == true , "player" , "|cffa335eeChakra_Serenity" },
+	{ 81208, not jps.buffId(81208) and LowestImportantUnitHpct < priest.get("HealthDPS")/100 and jps.FinderLastMessage("Cancelaura") == false , "player" , "|cffa335eeChakra_Serenity" },
+	{ 81208, not jps.buffId(81208) and not jps.FaceTarget and jps.FinderLastMessage("Cancelaura") == false , "player" , "|cffa335eeChakra_Serenity" },
 
 	-- "Soins rapides" 2061 "From Darkness, Comes Light" 109186 gives buff -- "Vague de Lumière" 114255 "Surge of Light"
 	{ 2061, jps.buff(114255) and (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) , LowestImportantUnit , "SoinsRapides_Light_"..LowestImportantUnit },
@@ -415,7 +417,7 @@ local spellTable = {
 		{
 			-- "Holy Word: Serenity" 88684 -- Chakra: Serenity 81208
 			{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) , LowestImportantUnit , "Emergency_Serenity_"..LowestImportantUnit },
-			-- "Prière de guérison" 33076 -- buff 4P pvp aug. 50% soins 
+			-- "Prière de guérison" 33076 
 			{ 33076, (type(MendingTarget) == "string") , MendingTarget , "Emergency_MendingTarget_" },
 			{ "nested", not jps.Moving and LowestImportantUnitHpct < priest.get("HealthEmergency")/100 , 
 				{
@@ -451,7 +453,6 @@ local spellTable = {
 
 	-- "Holy Word: Serenity" 88684 -- Chakra: Serenity 81208
 	{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) and (LowestImportantUnitHealth > priest.AvgAmountGreatHeal) , LowestImportantUnit , "Serenity_"..LowestImportantUnit },
-
 	{ "nested", not jps.Moving , 
 		{
 			-- "Soins supérieurs" 2060
@@ -471,16 +472,16 @@ local spellTable = {
 	{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player") , "player" }, -- "target" by default must must be a valid target
 
 	-- "Soins" 2050
-	{ 2050, jps.buff(139,LowestImportantUnit) and LowestImportantUnitHealth > priest.AvgAmountHeal , LowestImportantUnit , "Soins_"..LowestImportantUnit },
+	{ 2050, jps.buff(139,LowestImportantUnit) and LowestImportantUnitHealth > priest.AvgAmountHeal and jps.buffDuration(139,LowestImportantUnit) < 4 , LowestImportantUnit , "Soins_"..LowestImportantUnit },
 	
 }
 
 ----------------------------
 -- TABLE GLOBAL MESSAGE FRAME
 ----------------------------
-
+	local ImportantUnitName = GetUnitName(LowestImportantUnit)
 	local MessageInfo = {
-		{jps.buffId(81208),"SERENITY:|cffa335ee "..LowestImportantUnit},
+		{jps.buffId(81208),"SERENITY:|cffa335ee "..ImportantUnitName},
 		{jps.buffId(81209),"CHASTISE:|cffa335ee "..rangedTarget},
 		{jps.buffId(81206),"SANCTUARY"},
 	}

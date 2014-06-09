@@ -72,11 +72,10 @@ local EnemyCount = jps.RaidEnemyCount()
 if jps.UnitExists("mouseover") and not jps.UnitExists("focus") then
 	if jps.UnitIsUnit("mouseovertarget","player") then
 		jps.Macro("/focus mouseover")
+		print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
 	end
 end
-if not canDPS("focus") then
-	jps.Macro("/clearfocus")
-end
+if not canDPS("focus") then jps.Macro("/clearfocus") end
 
 if canDPS("target") then rangedTarget =  "target"
 elseif canDPS("targettarget") then rangedTarget = "targettarget"
@@ -84,7 +83,10 @@ elseif canDPS("focustarget") then rangedTarget = "focustarget"
 elseif canDPS("mouseover") then rangedTarget = "mouseover"
 end
 
-if canDPS(rangedTarget) then jps.Macro("/target "..rangedTarget) end
+if canDPS(rangedTarget) then
+	jps.Macro("/target "..rangedTarget)
+	--jps.TargetMarker("target")
+end
 
 ------------------------
 -- LOCAL FUNCTIONS ENEMY
@@ -113,14 +115,14 @@ end
 
 local PainEnemyTarget = nil
 for _,unit in ipairs(EnemyUnit) do 
-	if not jps.myDebuff(589,unit) and (jps.CurrentCast ~= ShadowPain or jps.LastCast ~= ShadowPain or jps.SentCast ~= ShadowPain ) then 
+	if not jps.myDebuff(589,unit) and not jps.myLastCast(589) then 
 		PainEnemyTarget = unit
 	break end
 end
 
 local VampEnemyTarget = nil
 for _,unit in ipairs(EnemyUnit) do 
-	if not jps.myDebuff(34914,unit) and (jps.CurrentCast ~= VampTouch or jps.LastCast ~= VampTouch) then 
+	if not jps.myDebuff(34914,unit) and not jps.myLastCast(34914) then
 		VampEnemyTarget = unit
 	break end
 end
@@ -129,6 +131,7 @@ local MassDispellTarget = nil
 for _,unit in ipairs(EnemyUnit) do
 	if jps.buff(divineshield,unit) then
 		MassDispellTarget = unit
+		print("MASSDISPELL on DIVINE SHIELD")
 		jps.Macro("/target "..MassDispellTarget)
 	break end
 end
@@ -272,19 +275,14 @@ local spellTable = {
 	-- "Vampiric Embrace" 15286
 	{ 15286, CountInRange > 1 , "player" },
 
-	{ "nested", jps.Interrupts ,
-		{
-			-- "Mass Dispel" 32375 "Dissipation de masse"
-			{ 32375 , type(MassDispellTarget) == "string" , MassDispellTarget , "|cff1eff00MassDispell_MultiUnit_" },
-		
-			-- OFFENSIVE Dispel -- "Dissipation de la magie" 528
-			{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive(rangedTarget) , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget }, -- (jps.LastCast ~= priest.Spell["DispelMagic"])
-			-- "Leap of Faith" 73325 -- "Saut de foi"
-			{ 73325 , type(LeapFriend) == "string" , LeapFriend , "|cff1eff00Leap_MultiUnit_" },
-			-- "Dispel" "Purifier" 527 -- UNAVAILABLE IN SHADOW FORM 15473
-		},
-	},
+	-- "Mass Dispel" 32375 "Dissipation de masse"
+	--{ 32375 , type(MassDispellTarget) == "string" , MassDispellTarget , "|cff1eff00MassDispell_MultiUnit_" },
 
+	-- OFFENSIVE Dispel -- "Dissipation de la magie" 528
+	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive(rangedTarget) , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget }, -- (jps.LastCast ~= priest.Spell["DispelMagic"])
+	-- "Leap of Faith" 73325 -- "Saut de foi"
+	{ 73325 , type(LeapFriend) == "string" , LeapFriend , "|cff1eff00Leap_MultiUnit_" },
+	-- "Dispel" "Purifier" 527 -- UNAVAILABLE IN SHADOW FORM 15473
 
 	-- "Dispersion" 47585
 	{ 47585, (UnitPower ("player",0)/UnitPowerMax ("player",0) < 0.50) and jps.cooldown(8092) > 6 , "player" , "Dispersion_Mana" },
@@ -296,9 +294,9 @@ local spellTable = {
 	{ "nested", jps.Moving ,
 		{
 			-- "Shadow Word: Pain" 589 Keep SW:P up with duration
-			{ 589, jps.myDebuff(589,rangedTarget) and jps.myDebuffDuration(589,rangedTarget) < 2 and (jps.CurrentCast ~= ShadowPain or jps.LastCast ~= ShadowPain or jps.SentCast ~= ShadowPain) , rangedTarget , "Move_Pain_Expire_"..rangedTarget },
+			{ 589, jps.myDebuff(589,rangedTarget) and jps.myDebuffDuration(589,rangedTarget) < 2 and not jps.myLastCast(589) , rangedTarget , "Move_Pain_Expire_"..rangedTarget },
 			-- "Shadow Word: Pain" 589 Keep up
-			{ 589, (not jps.myDebuff(589,rangedTarget)) and (jps.CurrentCast ~= ShadowPain or jps.LastCast ~= ShadowPain or jps.SentCast ~= ShadowPain) , rangedTarget , "Move_Pain_New_"..rangedTarget},
+			{ 589, (not jps.myDebuff(589,rangedTarget)) and not jps.myLastCast(589) , rangedTarget , "Move_Pain_New_"..rangedTarget},
 		}
 	},
 	
@@ -317,13 +315,13 @@ local spellTable = {
 
 	-- APPLY and MAINTAIN Shadow Word: Pain and Vampiric Touch
 	-- "Shadow Word: Pain" 589 Keep SW:P up with duration
-	{ 589, jps.myDebuff(589,rangedTarget) and jps.myDebuffDuration(589,rangedTarget) < 2 and (jps.CurrentCast ~= ShadowPain or jps.LastCast ~= ShadowPain or jps.SentCast ~= ShadowPain) , rangedTarget , "Pain_Expire_"..rangedTarget },
+	{ 589, jps.myDebuff(589,rangedTarget) and jps.myDebuffDuration(589,rangedTarget) < 2 and not jps.myLastCast(589) , rangedTarget , "Pain_Expire_"..rangedTarget },
 	-- "Shadow Word: Pain" 589
-	{ 589, not jps.myDebuff(589,rangedTarget) and (jps.CurrentCast ~= ShadowPain or jps.LastCast ~= ShadowPain or jps.SentCast ~= ShadowPain) , rangedTarget , "Pain_New_"..rangedTarget },
+	{ 589, not jps.myDebuff(589,rangedTarget) and not jps.myLastCast(589) , rangedTarget , "Pain_New_"..rangedTarget },
 	-- "Vampiric Touch" 34914 Keep VT up with duration
-	{ 34914, UnitHealth(rangedTarget) > 120000 and jps.myDebuff(34914,rangedTarget) and jps.myDebuffDuration(34914,rangedTarget) < 2.2 and (jps.CurrentCast ~= VampTouch or jps.LastCast ~= VampTouch) , rangedTarget },
+	{ 34914, UnitHealth(rangedTarget) > 120000 and jps.myDebuff(34914,rangedTarget) and jps.myDebuffDuration(34914,rangedTarget) < 2.2 and not jps.myLastCast(34914) , rangedTarget },
 	-- "Vampiric Touch" 34914 
-	{ 34914, UnitHealth(rangedTarget) > 120000 and not jps.myDebuff(34914,rangedTarget) and (jps.CurrentCast ~= VampTouch or jps.LastCast ~= VampTouch) , rangedTarget },
+	{ 34914, UnitHealth(rangedTarget) > 120000 and not jps.myDebuff(34914,rangedTarget) and not jps.myLastCast(34914) , rangedTarget },
 
 	-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
 	{ 6346, not jps.buff(6346,"player") , "player" },

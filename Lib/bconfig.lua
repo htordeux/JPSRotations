@@ -97,6 +97,7 @@ MessageInfoFrame:SetJustifyV("BOTTOM") -- BOTTOM MIDDLE TOP
 MessageInfoFrame:Hide()
 
 jps.MessageInfo = {}
+jps.listener.registerEvent("ACTIVE_TALENT_GROUP_CHANGED", function() jps.MessageInfo = {} end)
 local UpdateMessageInfo = function ()
 	for _,info in ipairs(jps.MessageInfo) do
 		if info[1] then
@@ -105,7 +106,10 @@ local UpdateMessageInfo = function ()
 		break end
 		MessageInfoFrame:Clear()
 	end
-	if not jps.Combat then MessageInfoFrame:Clear() end
+	if not jps.Combat then
+		MessageInfoFrame:Hide()
+		MessageInfoFrame:Clear()
+	end
 end
 
 --MessageInfoFrame:SetScript("OnUpdate", function(self, elapsed)
