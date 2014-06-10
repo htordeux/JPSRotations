@@ -10,6 +10,7 @@ local canDPS = jps.canDPS
 local UnitGroupRolesAssigned = UnitGroupRolesAssigned
 local ipairs = ipairs
 local GetUnitName = GetUnitName
+local tinsert = table.insert
 
 local iceblock = tostring(select(1,GetSpellInfo(45438))) -- ice block mage
 local divineshield = tostring(select(1,GetSpellInfo(642))) -- divine shield paladin
@@ -206,6 +207,13 @@ local priestHolyPvP = function()
 -- LOCAL FUNCTIONS ENEMY
 ------------------------
 
+	local FearEnemyTarget = nil
+	for _,unit in ipairs(EnemyUnit) do 
+		if priest.canFear(unit) and not jps.LoseControl(unit) and jps.shouldKickLag(unit) then 
+			FearEnemyTarget = unit
+		break end
+	end
+
 	local DeathEnemyTarget = nil
 	for _,unit in ipairs(EnemyUnit) do 
 		if priest.canShadowWordDeath(unit) then 
@@ -237,6 +245,19 @@ local InterruptTable = {
 	if jps.ChannelTimeLeft() > 0 then return nil end
 -- Avoid Overhealing
 	priest.ShouldInterruptCasting( InterruptTable , AvgHealthLoss ,  CountInRange )
+	
+----------------------------
+-- MESSAGE FRAME TABLE
+----------------------------
+
+	local ImportantUnitName = GetUnitName(LowestImportantUnit)
+	local MessageInfo = {
+		{jps.buffId(81208),"SERENITY:|cffa335ee "..ImportantUnitName},
+		{jps.buffId(81209),"CHASTISE:|cffa335ee "..rangedTarget},
+		{jps.buffId(81206),"SANCTUARY"},
+	}
+	
+	jps.MessageInfo = setmetatable(MessageInfo, {__index = function(t, index) return index end})
 
 ------------------------
 -- LOCAL TABLES
@@ -249,6 +270,7 @@ local InterruptTable = {
 		{ 88625, not jps.buffId(81208) and not jps.buffId(81206) , rangedTarget  , "|cFFFF0000Chastise_NO_Chakra_"..rangedTarget },
 		{ 88625, jps.buffId(81209) , rangedTarget , "|cFFFF0000Chastise_Chakra_"..rangedTarget },
 		-- "Psychic Scream" "Cri psychique" 8122 -- FARMING OR PVP -- NOT PVE -- debuff same ID 8122
+		{ 8122, type(FearEnemyTarget) == "string" , FearEnemyTarget , "Fear_MultiUnit_" },
 		{ 8122, priest.canFear(rangedTarget) , rangedTarget },
 		-- "Psyfiend" 108921 Démon psychique
 		{ 108921, playerAggro and priest.canFear(rangedTarget) , rangedTarget },
@@ -475,18 +497,6 @@ local spellTable = {
 	{ 2050, jps.buff(139,LowestImportantUnit) and LowestImportantUnitHealth > priest.AvgAmountHeal and jps.buffDuration(139,LowestImportantUnit) < 4 , LowestImportantUnit , "Soins_"..LowestImportantUnit },
 	
 }
-
-----------------------------
--- TABLE GLOBAL MESSAGE FRAME
-----------------------------
-	local ImportantUnitName = GetUnitName(LowestImportantUnit)
-	local MessageInfo = {
-		{jps.buffId(81208),"SERENITY:|cffa335ee "..ImportantUnitName},
-		{jps.buffId(81209),"CHASTISE:|cffa335ee "..rangedTarget},
-		{jps.buffId(81206),"SANCTUARY"},
-	}
-	
-	jps.MessageInfo = setmetatable(MessageInfo, {__index = function(t, index) return index end})
 
 	local spell,target = parseSpellTable(spellTable)
 	return spell,target

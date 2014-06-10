@@ -11,7 +11,7 @@ local ClassEnemy = {
 	["HUNTER"] = false,
 	["ROGUE"] = false,
 	["PRIEST"] = true,
-	["DEATHKNIGHT"] = true,
+	["DEATHKNIGHT"] = false,
 	["SHAMAN"] = true,
 	["MAGE"] = true,
 	["WARLOCK"] = true,
@@ -85,7 +85,7 @@ end
 
 if canDPS(rangedTarget) then
 	jps.Macro("/target "..rangedTarget)
-	--jps.TargetMarker("target")
+	jps.TargetMarker("target",8)
 end
 
 ------------------------
@@ -101,7 +101,7 @@ end
 
 local SilenceEnemyTarget = nil
 for _,unit in ipairs(EnemyUnit) do 
-	if EnemyCaster(unit) and not jps.LoseControl(unit) and jps.shouldKickLag(unit) then 
+	if not jps.LoseControl(unit) and jps.shouldKickLag(unit) then 
 		SilenceEnemyTarget = unit
 	break end
 end
@@ -131,7 +131,6 @@ local MassDispellTarget = nil
 for _,unit in ipairs(EnemyUnit) do
 	if jps.buff(divineshield,unit) then
 		MassDispellTarget = unit
-		print("MASSDISPELL on DIVINE SHIELD")
 		jps.Macro("/target "..MassDispellTarget)
 	break end
 end
@@ -215,7 +214,7 @@ local parseHeal = {
 	-- "Pierre de soins" 5512
 	{ {"macro","/use item:5512"}, select(1,IsUsableItem(5512))==1 and jps.itemCooldown(5512)==0 , "player" , "Healthstone_" },
 	-- "Vampiric Embrace" 15286
-	{ 15286, true , "player" },
+	{ 15286, AvgHealthLoss < priest.get("HealthDPS")/100 , "player" },
 	-- "Power Word: Shield" 17	
 	{ 17, playerAggro and not jps.debuff(6788,"player") and not jps.buff(17,"player") , "player" },
 	-- "Renew" 139 Self heal when critical 
@@ -226,7 +225,7 @@ local parseHeal = {
 
 local parseAggro = {
 	-- "Dispersion" 47585
-	{ 47585,  playerhealthpct < 0.35 , "player" , "Aggro_Dispersion_" },
+	{ 47585,  playerhealthpct < 0.40 , "player" , "Aggro_Dispersion_" },
 	-- "Oubli" 586 -- Fantasme 108942 -- vous dissipez tous les effets affectant le déplacement sur vous-même et votre vitesse de déplacement ne peut être réduite pendant 5 s
 	{ 586, jps.IsSpellKnown(108942) , "player" , "Aggro_Oubli" },
 	{ 586, jps.glyphInfo(55684) , "player" , "Aggro_Oubli" },
@@ -271,7 +270,7 @@ local spellTable = {
 	-- "Cascade" Holy 121135 Shadow 127632
 	{ 127632, EnemyCount > 2 and priest.get("Cascade") , rangedTarget , "Cascade_"  },
 
-	{ "nested", playerhealthpct < 0.75 , parseHeal },
+	{ "nested", playerhealthpct < priest.get("HealthEmergency")/100 , parseHeal },
 	-- "Vampiric Embrace" 15286
 	{ 15286, CountInRange > 1 , "player" },
 

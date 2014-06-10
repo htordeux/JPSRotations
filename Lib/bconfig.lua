@@ -104,7 +104,7 @@ local UpdateMessageInfo = function ()
 			MessageInfoFrame:Show()
 			MessageInfoFrame:AddMessage(info[2])
 		break end
-		MessageInfoFrame:Clear()
+		MessageInfoFrame:Hide()
 	end
 	if not jps.Combat then
 		MessageInfoFrame:Hide()
