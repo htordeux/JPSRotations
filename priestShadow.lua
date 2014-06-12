@@ -69,13 +69,13 @@ local playerControlled = jps.LoseControl("player",{"CC"})
 local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
 local EnemyCount = jps.RaidEnemyCount()
 -- set focus an enemy targeting you
-if jps.getConfigVal("set healer as focus") == 0 and canDPS("mouseover") and not jps.UnitExists("focus") then
+if canDPS("mouseover") and not jps.UnitExists("focus") then
 	if jps.UnitIsUnit("mouseovertarget","player") then
 		jps.Macro("/focus mouseover")
 		print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
 	end
 end
-if not canDPS("focus") then jps.Macro("/clearfocus") end
+--if not canDPS("focus") then jps.Macro("/clearfocus") end
 
 if canDPS("target") then rangedTarget =  "target"
 elseif canDPS("targettarget") then rangedTarget = "targettarget"
@@ -83,12 +83,7 @@ elseif canDPS("focustarget") then rangedTarget = "focustarget"
 elseif canDPS("mouseover") then rangedTarget = "mouseover"
 end
 
-if canDPS(rangedTarget) then
-	jps.Macro("/target "..rangedTarget)
-	if jps.UnitType("target") == "player" then jps.TargetMarker("target",8)
-	elseif jps.UnitType("target") == "NPC" then jps.TargetMarker("target",8)
-	end
-end
+if canDPS(rangedTarget) then jps.Macro("/target "..rangedTarget) end
 
 ------------------------
 -- LOCAL FUNCTIONS ENEMY
@@ -299,7 +294,7 @@ local spellTable = {
 
 	{ "nested", playerhealthpct < priest.get("HealthEmergency")/100 , parseHeal },
 	-- "Vampiric Embrace" 15286
-	{ 15286, CountInRange > 2 and AvgHealthLoss < priest.get("HealthDPS")/100 , "player" },
+	{ 15286, AvgHealthLoss < priest.get("HealthDPS")/100 , "player" },
 
 	-- "Mass Dispel" 32375 "Dissipation de masse"
 	--{ 32375 , type(MassDispellTarget) == "string" , MassDispellTarget , "|cff1eff00MassDispell_MultiUnit_" },

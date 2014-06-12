@@ -193,7 +193,7 @@ local priestHolyPvP = function()
 			print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
 		end
 	end
-	if not canDPS("focus") then jps.Macro("/clearfocus") end
+	--if not canDPS("focus") then jps.Macro("/clearfocus") end
 	
 	if canDPS("target") then rangedTarget =  "target"
 	elseif canDPS("targettarget") then rangedTarget = "targettarget"
