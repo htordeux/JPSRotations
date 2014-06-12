@@ -37,7 +37,7 @@ jps.registerRotation("PRIEST","SHADOW",function()
 local spell = nil
 local target = nil
 
-local CountInRange, AvgHealthLoss, FriendUnit = jps.CountInRaidStatus(0.75)
+local CountInRange, AvgHealthLoss, FriendUnit = jps.CountInRaidStatus(1)
 local playerIsInterrupt = jps.checkTimer("PlayerInterrupt")
 local playerhealth =  jps.hp("player","abs")
 local playerhealthpct = jps.hp("player")
@@ -69,7 +69,7 @@ local playerControlled = jps.LoseControl("player",{"CC"})
 local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
 local EnemyCount = jps.RaidEnemyCount()
 -- set focus an enemy targeting you
-if jps.UnitExists("mouseover") and not jps.UnitExists("focus") then
+if jps.getConfigVal("set healer as focus") == 0 and canDPS("mouseover") and not jps.UnitExists("focus") then
 	if jps.UnitIsUnit("mouseovertarget","player") then
 		jps.Macro("/focus mouseover")
 		print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
@@ -85,7 +85,9 @@ end
 
 if canDPS(rangedTarget) then
 	jps.Macro("/target "..rangedTarget)
-	jps.TargetMarker("target",8)
+	if jps.UnitType("target") == "player" then jps.TargetMarker("target",8)
+	elseif jps.UnitType("target") == "NPC" then jps.TargetMarker("target",8)
+	end
 end
 
 ------------------------
@@ -200,12 +202,21 @@ local parseControl = {
 	-- "Psychic Horror" 64044 "Horreur psychique" -- 30 yd range
 	{ 64044, jps.canCast(64044,rangedTarget) and Orbs > 0 , rangedTarget , "Psychic Horror_"..rangedTarget },
 	-- "Silence" 15487
-	{ 15487, EnemyCaster(rangedTarget) , rangedTarget , "Silence_Caster_"..rangedTarget },
 	{ 15487, type(SilenceEnemyTarget) == "string" , SilenceEnemyTarget , "Silence_MultiUnit_" },
+	{ 15487, EnemyCaster(rangedTarget) , rangedTarget , "Silence_Caster_"..rangedTarget },
 	-- "Psyfiend" 108921 Démon psychique
 	{ 108921, playerAggro and priest.canFear(rangedTarget) , rangedTarget },
 	-- "Void Tendrils" 108920 -- debuff "Void Tendril's Grasp" 114404
 	{ 108920, playerAggro and priest.canFear(rangedTarget) , rangedTarget },
+}
+
+local parseControlFocus = {
+	-- "Psychic Scream" "Cri psychique" 8122 -- FARMING OR PVP -- NOT PVE -- debuff same ID 8122
+	{ 8122, priest.canFear("focus") , "focus" , "Fear_".."focus" },
+	-- "Psychic Horror" 64044 "Horreur psychique" -- 30 yd range
+	{ 64044, jps.canCast(64044,"focus") and Orbs > 0 , "focus" , "Psychic Horror_".."focus" },
+	-- "Silence" 15487
+	{ 15487, EnemyCaster("focus") , "focus" , "Silence_Caster_".."focus" },
 }
 
 local parseHeal = {
@@ -225,12 +236,12 @@ local parseHeal = {
 
 local parseAggro = {
 	-- "Dispersion" 47585
-	{ 47585,  playerhealthpct < 0.40 , "player" , "Aggro_Dispersion_" },
+	{ 47585,  playerhealthpct < 0.40 and jps.hp(rangedTarget) > 0.20 , "player" , "Aggro_Dispersion_" },
 	-- "Oubli" 586 -- Fantasme 108942 -- vous dissipez tous les effets affectant le déplacement sur vous-même et votre vitesse de déplacement ne peut être réduite pendant 5 s
-	{ 586, jps.IsSpellKnown(108942) , "player" , "Aggro_Oubli" },
-	{ 586, jps.glyphInfo(55684) , "player" , "Aggro_Oubli" },
+	{ 586, jps.IsSpellKnown(108942) and playerhealthpct < priest.get("HealthEmergency")/100 , "player" , "Aggro_Oubli" },
+	{ 586, jps.glyphInfo(55684) and playerhealthpct < priest.get("HealthEmergency")/100 , "player" , "Aggro_Oubli" },
 	-- "Semblance spectrale" 108968
-	{ 112833, jps.IsSpellKnown(112833) , "player" , "Aggro_Spectral_" },
+	{ 112833, jps.IsSpellKnown(112833) and playerhealthpct < priest.get("HealthDPS")/100 , "player" , "Aggro_Spectral_" },
 }
 
 -----------------------------
@@ -239,11 +250,27 @@ local parseAggro = {
 
 local spellTable = {
 
+	{"nested", not jps.Combat , 
+		{
+			{ 47585, (UnitPower ("player",0)/UnitPowerMax ("player",0) < 0.50) , "player" , "Dispersion_Mana" },
+			-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
+			{ 6346, not jps.buff(6346,"player") , "player" },
+			-- "Inner Fire" 588 Keep Inner Fire up 
+			{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player"), "player" }, -- "Volonté intérieure" 73413
+			-- "Fortitude" 21562 Keep Inner Fortitude up 
+			{ 21562, not jps.buff(21562,"player") , "player" },
+			-- "Shadowform" 15473
+			{ 15473, not jps.buff(15473) , "player" },
+		},
+	},
+
 	-- "Shadowform" 15473
 	{ 15473, not jps.buff(15473) , "player" },
 	-- TRINKETS -- jps.useTrinket(0) est "Trinket0Slot" est slotId  13 -- "jps.useTrinket(1) est "Trinket1Slot" est slotId  14
 	{ jps.useTrinket(1), jps.UseCDs and jps.useTrinketBool(1) and playerIsStun , "player" },
 	
+	-- FOCUS CONTROL
+	{ "nested", canDPS("focus") and not jps.LoseControl("focus") , parseControlFocus },
 	{ "nested", not jps.LoseControl(rangedTarget) , parseControl },
 	{ "nested", playerAggro , parseAggro },
 
@@ -272,7 +299,7 @@ local spellTable = {
 
 	{ "nested", playerhealthpct < priest.get("HealthEmergency")/100 , parseHeal },
 	-- "Vampiric Embrace" 15286
-	{ 15286, CountInRange > 1 , "player" },
+	{ 15286, CountInRange > 2 and AvgHealthLoss < priest.get("HealthDPS")/100 , "player" },
 
 	-- "Mass Dispel" 32375 "Dissipation de masse"
 	--{ 32375 , type(MassDispellTarget) == "string" , MassDispellTarget , "|cff1eff00MassDispell_MultiUnit_" },
@@ -284,7 +311,7 @@ local spellTable = {
 	-- "Dispel" "Purifier" 527 -- UNAVAILABLE IN SHADOW FORM 15473
 
 	-- "Dispersion" 47585
-	{ 47585, (UnitPower ("player",0)/UnitPowerMax ("player",0) < 0.50) and jps.cooldown(8092) > 6 , "player" , "Dispersion_Mana" },
+	{ 47585, (UnitPower ("player",0)/UnitPowerMax ("player",0) < 0.50) and jps.cooldown(8092) > 6 and jps.hp(rangedTarget) > 0.20 , "player" , "Dispersion_Mana" },
 	-- "Mindbender" "Torve-esprit" 123040 -- "Ombrefiel" 34433 "Shadowfiend"
 	{ 34433, priest.canShadowfiend(rangedTarget) , rangedTarget },
 	{ 123040, priest.canShadowfiend(rangedTarget) , rangedTarget },
@@ -304,10 +331,11 @@ local spellTable = {
 
 	-- MULTITARGET
 	{  48045, jps.MultiTarget and EnemyCount > 4 and priest.get("MindSear") , rangedTarget  },
-	-- "Shadow Word: Pain" 589
-	{ 589, type(PainEnemyTarget) == "string" , PainEnemyTarget , "Pain_MultiUnit_" },	
+	
 	-- "Vampiric Touch" 34914
 	{ 34914, type(VampEnemyTarget) == "string" , VampEnemyTarget , "Vamp_MultiUnit_" },
+	-- "Shadow Word: Pain" 589
+	{ 589, type(PainEnemyTarget) == "string" , PainEnemyTarget , "Pain_MultiUnit_" },
 
 	-- "Mind Flay" 15407 -- "Devouring Plague" 2944 -- "Shadow Word: Pain" 589
 	{ 15407, jps.IsSpellKnown(139139) and jps.debuff(2944,rangedTarget) and jps.myDebuffDuration(2944,rangedTarget) < jps.myDebuffDuration(589,rangedTarget) and jps.myDebuff(34914,rangedTarget) , rangedTarget , "MINDFLAYORBS_" },
