@@ -276,6 +276,11 @@ local spellTable = {
 	{ 122121, playerIsInterrupt > 0 , "player" , "Interrupt_DivineStar_" },
 	-- "Devouring Plague" 2944
 	{ 2944, Orbs == 3 , rangedTarget , "ORBS_3" },
+	-- "Devouring Plague" 2944 -- orbs < 3 if timetodie < few sec
+	{ 2944, Orbs > 0 and jps.hp(rangedTarget) < 0.20 and not jps.buff(124430) , rangedTarget , "ORBS_20%_NoBuff" },
+	{ 2944, Orbs > 1 and jps.hp(rangedTarget) < 0.20 , rangedTarget , "ORBS_2_" },
+	{ 2944, Orbs > 1 and jps.myDebuffDuration(34914,rangedTarget) > (6 + 1.055*3) and jps.myDebuffDuration(589,rangedTarget) > (6 + 1.055*3) , rangedTarget , "ORBS_2_Buff_" },
+	
 	-- FOCUS CONTROL
 	{ "nested", canDPS("focus") and not jps.LoseControl("focus") , parseControlFocus },
 	{ "nested", not jps.LoseControl(rangedTarget) , parseControl },
@@ -284,10 +289,6 @@ local spellTable = {
 	-- "Void Shift" 108968 -- "Dispersion" 47585
 	{ 108968, jps.UseCDs and type(VoidShiftFriend) == "string" and jps.cooldown(47585) == 0 , VoidShiftFriend , "Emergency_VoidShift_" },
 
-	-- "Devouring Plague" 2944 -- orbs < 3 if timetodie < few sec
-	{ 2944, Orbs > 0 and jps.hp(rangedTarget) < 0.20 and not jps.buff(124430) , rangedTarget , "ORBS_20%_NoBuff" },
-	{ 2944, Orbs > 1 and jps.hp(rangedTarget) < 0.20 , rangedTarget , "ORBS_2_" },
-	{ 2944, Orbs > 1 and jps.myDebuffDuration(34914,rangedTarget) > (6 + 1.055*3) and jps.myDebuffDuration(589,rangedTarget) > (6 + 1.055*3) , rangedTarget , "ORBS_2_Buff_" },
 	-- "Mind Blast" 8092 -- "Glyph of Mind Spike" 33371 gives buff 81292 
 	{ 8092, (jps.buffStacks(81292) == 2) , rangedTarget , "Blast" },
 	-- "Mind Blast" 8092 -- "Divine Insight" 109175 gives buff 124430 Attaque mentale est instantanée et ne coûte pas de mana.
@@ -301,9 +302,6 @@ local spellTable = {
 	{ 73510, jps.buff(87160) and jps.buffDuration(87160) < (1.055*4) , rangedTarget },
 	{ 73510, jps.buff(87160) and jps.myDebuff(34914,rangedTarget) , rangedTarget }, -- debuff "Vampiric Touch" 34914
 	{ 73510, jps.buff(87160) and jps.myDebuff(589,rangedTarget) , rangedTarget }, -- debuff "Shadow Word: Pain" 589
-
-	-- "Cascade" Holy 121135 Shadow 127632
-	{ 127632, EnemyCount > 2 and priest.get("Cascade") , rangedTarget , "Cascade_"  },
 
 	{ "nested", playerhealthpct < priest.get("HealthEmergency")/100 , parseHeal },
 	-- "Vampiric Embrace" 15286
@@ -320,49 +318,32 @@ local spellTable = {
 	-- "Dispel" "Purifier" 527 -- UNAVAILABLE IN SHADOW FORM 15473
 
 	-- "Vampiric Touch" 34914 
-	{ 34914, not jps.Moving and UnitHealth(rangedTarget) > 120000 and not jps.myDebuff(34914,rangedTarget) and not jps.myLastCast(34914) , rangedTarget , "VT_On_Opening_" },
+	{ 34914, not jps.Moving and UnitHealth(rangedTarget) > 120000 and not jps.myDebuff(34914,rangedTarget) and not jps.myLastCast(34914) , rangedTarget , "VT_On_" },
 	-- "Vampiric Touch" 34914 Keep VT up with duration
-	{ 34914, not jps.Moving and UnitHealth(rangedTarget) > 120000 and jps.myDebuff(34914,rangedTarget) and jps.myDebuffDuration(34914,rangedTarget) < (1.055*2) and not jps.myLastCast(34914) , rangedTarget , "VT_Keep_Opening_" },
-
+	{ 34914, not jps.Moving and UnitHealth(rangedTarget) > 120000 and jps.myDebuff(34914,rangedTarget) and jps.myDebuffDuration(34914,rangedTarget) < (1.055*2) and not jps.myLastCast(34914) , rangedTarget , "VT_Keep_" },
+	-- "Shadow Word: Pain" 589 Keep SW:P up with duration
+	{ 589, jps.myDebuff(589,rangedTarget) and jps.myDebuffDuration(589,rangedTarget) < (1.055*2) and not jps.myLastCast(589) , rangedTarget , "Pain_Keep_"..rangedTarget },
+	-- "Shadow Word: Pain" 589 Keep up
+	{ 589, (not jps.myDebuff(589,rangedTarget)) and not jps.myLastCast(589) , rangedTarget , "Pain_On_"..rangedTarget},
+	
 	-- "Mindbender" "Torve-esprit" 123040 -- "Ombrefiel" 34433 "Shadowfiend"
 	{ 34433, priest.canShadowfiend(rangedTarget) , rangedTarget },
 	{ 123040, priest.canShadowfiend(rangedTarget) , rangedTarget },
 
-	-- MOVING
-	{ "nested", jps.Moving ,
-		{
-			-- "Shadow Word: Pain" 589 Keep SW:P up with duration
-			{ 589, jps.myDebuff(589,rangedTarget) and jps.myDebuffDuration(589,rangedTarget) < (1.055*2) and not jps.myLastCast(589) , rangedTarget , "Move_Pain_Expire_"..rangedTarget },
-			-- "Shadow Word: Pain" 589 Keep up
-			{ 589, (not jps.myDebuff(589,rangedTarget)) and not jps.myLastCast(589) , rangedTarget , "Move_Pain_New_"..rangedTarget},
-			-- "Shadow Word: Pain" 589
-			{ 589, type(PainEnemyTarget) == "string" , PainEnemyTarget , "Pain_MultiUnit_" },
-		}
-	},
-	
 	-- "Power Infusion" "Infusion de puissance" 10060
 	{ 10060, UnitAffectingCombat("player")==1 and (UnitPower ("player",0)/UnitPowerMax ("player",0) > 0.20) , "player" },
-
-	-- MULTITARGET
-	{  48045, jps.MultiTarget and EnemyCount > 4 and priest.get("MindSear") , rangedTarget  },
 	
+	-- "Cascade" Holy 121135 Shadow 127632
+	{ 127632, EnemyCount > 2 and priest.get("Cascade") , rangedTarget , "Cascade_"  },
+	-- MULTITARGET
+	{  48045, not jps.Moving and jps.MultiTarget and EnemyCount > 4 and priest.get("MindSear") , rangedTarget  },
+	-- "Shadow Word: Pain" 589
+	{ 589, type(PainEnemyTarget) == "string" , PainEnemyTarget , "Pain_MultiUnit_" },	
 	-- "Vampiric Touch" 34914
 	{ 34914, type(VampEnemyTarget) == "string" , VampEnemyTarget , "Vamp_MultiUnit_" },
-	-- "Shadow Word: Pain" 589
-	{ 589, type(PainEnemyTarget) == "string" , PainEnemyTarget , "Pain_MultiUnit_" },
 
 	-- "Mind Flay" 15407 -- "Devouring Plague" 2944 -- "Shadow Word: Pain" 589
 	{ 15407, jps.IsSpellKnown(139139) and jps.debuff(2944,rangedTarget) and jps.myDebuffDuration(2944,rangedTarget) < jps.myDebuffDuration(589,rangedTarget) and jps.myDebuff(34914,rangedTarget) , rangedTarget , "MINDFLAYORBS_" },
-
-	-- APPLY and MAINTAIN Shadow Word: Pain and Vampiric Touch
-	-- "Shadow Word: Pain" 589 Keep SW:P up with duration
-	{ 589, jps.myDebuff(589,rangedTarget) and jps.myDebuffDuration(589,rangedTarget) < (1.055*2) and not jps.myLastCast(589) , rangedTarget , "Pain_Expire_"..rangedTarget },
-	-- "Shadow Word: Pain" 589
-	{ 589, not jps.myDebuff(589,rangedTarget) and not jps.myLastCast(589) , rangedTarget , "Pain_New_"..rangedTarget },
-	-- "Vampiric Touch" 34914 Keep VT up with duration
-	{ 34914, UnitHealth(rangedTarget) > 120000 and jps.myDebuff(34914,rangedTarget) and jps.myDebuffDuration(34914,rangedTarget) < (1.055*2) and not jps.myLastCast(34914) , rangedTarget , "VT_Keep_" },
-	-- "Vampiric Touch" 34914 
-	{ 34914, UnitHealth(rangedTarget) > 120000 and not jps.myDebuff(34914,rangedTarget) and not jps.myLastCast(34914) , rangedTarget , "VT_On_" },
 
 	-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
 	{ 6346, not jps.buff(6346,"player") , "player" },
