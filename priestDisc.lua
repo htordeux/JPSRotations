@@ -157,7 +157,7 @@ local priestDiscPvP = function()
 ---------------------
 
 	local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
-
+	-- set focus a senemy healer or enemy targeting you
 	if jps.UnitExists("mouseover") and not jps.UnitExists("focus") then
 		if jps.RoleClass("mouseover") == "HEALER" then
 			jps.Macro("/focus mouseover")
@@ -172,7 +172,7 @@ local priestDiscPvP = function()
 	elseif canDPS("focustarget") then rangedTarget = "focustarget"
 	elseif canDPS("mouseover") then rangedTarget = "mouseover"
 	end
-
+	-- if your target is friendly keep it as target
 	if not jps.canHeal("target") and canDPS(rangedTarget) then jps.Macro("/target "..rangedTarget) end
 
 ------------------------
@@ -191,18 +191,7 @@ local priestDiscPvP = function()
 		if jps.buff(divineshield,unit) then
 			MassDispellTarget = unit
 			jps.Macro("/target "..MassDispellTarget)
-			table.insert(jps.MessageInfo,1,{true,"PALADIN"})
 		break end
-	end
-
--------------------
--- DEBUG
--------------------
-
-	if IsControlKeyDown() then
-		write("|cff1eff00Name: ",GetUnitName(LowestImportantUnit),"|cffe5cc80hp: ",LowestImportantUnitHpct,"hpAbs: ",LowestImportantUnitHealth)
-		write("Name: ",GetUnitName(jps.LowestInRaidStatus()),"|cffe5cc80hp: ",jps.hp(jps.LowestInRaidStatus()),"hpAbs: ",jps.hp(jps.LowestInRaidStatus(),"abs"))
-		print("POHTarget: ", POHTarget, "groupToHeal: ", groupToHeal, "groupTableToHeal: ", unpack(groupTableToHeal))
 	end
 
 ----------------------------------------------------------
@@ -220,29 +209,6 @@ local InterruptTable = {
 	if jps.ChannelTimeLeft() > 0 then return nil end
 -- Avoid Overhealing
 	priest.ShouldInterruptCasting( InterruptTable , AvgHealthLoss ,  CountInRange )
-	
----------------------
--- ENEMY TARGET
----------------------
-
-	local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
-
-	if jps.UnitExists("mouseover") and not jps.UnitExists("focus") then
-		if jps.RoleClass("mouseover") == "HEALER" then
-			jps.Macro("/focus mouseover")
-		elseif jps.UnitIsUnit("mouseovertarget","player") then
-			jps.Macro("/focus mouseover")
-		end
-	end
-	if not canDPS("focus") then jps.Macro("/clearfocus") end
-	
-	if canDPS("target") then rangedTarget =  "target"
-	elseif canDPS("targettarget") then rangedTarget = "targettarget"
-	elseif canDPS("focustarget") then rangedTarget = "focustarget"
-	elseif canDPS("mouseover") then rangedTarget = "mouseover"
-	end
-
-	if not jps.canHeal("target") and canDPS(rangedTarget) then jps.Macro("/target "..rangedTarget) end
 	
 ------------------------
 -- LOCAL TABLES
@@ -309,7 +275,7 @@ local InterruptTable = {
 	spellTable = {
 		
 	-- TRINKETS -- jps.useTrinket(0) est "Trinket0Slot" est slotId  13 -- "jps.useTrinket(1) est "Trinket1Slot" est slotId  14
-	{ jps.useTrinket(1), jps.UseCDs and jps.useTrinketBool(1) and playerIsStun , "player" },
+	{ jps.useTrinket(1), jps.useTrinketBool(1) and playerIsStun , "player" },
 	-- "Soins rapides" 2061 "From Darkness, Comes Light" 109186 gives buff -- "Vague de Lumière" 114255 "Surge of Light"
 	{ 2061, jps.buff(114255) and (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) , LowestImportantUnit , "SoinsRapides_Light_"..LowestImportantUnit },
 	{ 2061, jps.buff(114255) and (jps.buffDuration(114255) < 4) , LowestImportantUnit , "SoinsRapides_Light_"..LowestImportantUnit },

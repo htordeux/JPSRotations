@@ -185,7 +185,7 @@ local priestHolyPvP = function()
 ---------------------
 
 	local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
-
+	-- set focus a senemy healer or enemy targeting you
 	if jps.UnitExists("mouseover") and not jps.UnitExists("focus") then
 		if jps.UnitIsUnit("mouseovertarget","player") then
 			jps.Macro("/focus mouseover")
@@ -193,14 +193,14 @@ local priestHolyPvP = function()
 			print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
 		end
 	end
-	--if not canDPS("focus") then jps.Macro("/clearfocus") end
+	if not canDPS("focus") then jps.Macro("/clearfocus") end
 	
 	if canDPS("target") then rangedTarget =  "target"
 	elseif canDPS("targettarget") then rangedTarget = "targettarget"
 	elseif canDPS("focustarget") then rangedTarget = "focustarget"
 	elseif canDPS("mouseover") then rangedTarget = "mouseover"
 	end
-
+	-- if your target is friendly keep it as target
 	if not jps.canHeal("target") and canDPS(rangedTarget) then jps.Macro("/target "..rangedTarget) end
 
 ------------------------
@@ -209,7 +209,7 @@ local priestHolyPvP = function()
 
 	local FearEnemyTarget = nil
 	for _,unit in ipairs(EnemyUnit) do 
-		if priest.canFear(unit) and not jps.LoseControl(unit) and jps.shouldKickLag(unit) then 
+		if priest.canFear(unit) and not jps.LoseControl(unit) and jps.shouldKickDelay(unit) then 
 			FearEnemyTarget = unit
 		break end
 	end
@@ -220,7 +220,7 @@ local priestHolyPvP = function()
 			DeathEnemyTarget = unit
 		break end
 	end
-	
+
 	local MassDispellTarget = nil
 	for _,unit in ipairs(EnemyUnit) do 
 		if jps.buff(divineshield,unit) then
@@ -329,9 +329,20 @@ local spellTable = {
 			{ 2061, jps.buff(27827) , LowestImportantUnit },
 		},
 	},
+	
+	{"nested", not jps.Combat , 
+		{
+			-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
+			{ 6346, not jps.buff(6346,"player") , "player" },
+			-- "Inner Fire" 588 Keep Inner Fire up 
+			{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player"), "player" }, -- "Volonté intérieure" 73413
+			-- "Fortitude" 21562 Keep Inner Fortitude up 
+			{ 21562, not jps.buff(21562,"player") , "player" },
+		},
+	},
 
 	-- TRINKETS -- jps.useTrinket(0) est "Trinket0Slot" est slotId  13 -- "jps.useTrinket(1) est "Trinket1Slot" est slotId  14
-	{ jps.useTrinket(1), jps.UseCDs and jps.useTrinketBool(1) and playerIsStun , "player" },
+	{ jps.useTrinket(1), jps.useTrinketBool(1) and playerIsStun , "player" },
 
 	-- CONTROL -- "Psychic Scream" "Cri psychique" 8122 -- FARMING OR PVP -- NOT PVE -- debuff same ID 8122
 	{ "nested", LowestImportantUnitHpct > 0.50 and not jps.LoseControl(rangedTarget) and canDPS(rangedTarget) , parseControl },
@@ -546,35 +557,3 @@ jps.registerRotation("PRIEST","HOLY", priestHolyPvP, "Holy Priest Custom", false
 -- "Divine Insight" 109175
 -- When you cast Greater Heal or Prayer of Healing, there is a 40% chance
 -- your next Prayer of Mending will not trigger its cooldown, and will jump to each target instantly.
-
---[[
-/cast Chakra: Chastise
-/cast Chastise
-
-/cast Chakra: Sanctuary
-/cast Divine Hymn
-
-#showtooltip Prayer of Mending
-/cast Chakra: Serenity
-/cast [target=mouseover,nomod,exists] Prayer of Mending; Prayer of Mending
-*
-When going for a chastise->fear, don't enter Chakra: Chastise. use a /cancelaura macro
-that way you can quickly re-enter your healing chakra after you have disoriented them
-
-#show Holy Word: Chastise
-/cancelaura Chakra: Chastise
-/cancelaura  Chakra: Sanctuary
-/cancelaura Chakra: Serenity
-/cast Holy Word: Chastise
-
-#showtooltip
-/cast [mod:shift] Chakra: Sanctuary; [nomod] Chakra: Serenity
-
-/cancelaura Chakra: Serenity
-/cancelaura Chakra: Sanctuary
-/cast [mod:shift] Chakra: Chastise
-
-#showtooltip Divine Hymn
-/cast Chakra: Sanctuary
-/cast Divine Hymn
-]]
