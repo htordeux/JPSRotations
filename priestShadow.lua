@@ -317,12 +317,12 @@ local spellTable = {
 	{ 73325 , type(LeapFriend) == "string" , LeapFriend , "|cff1eff00Leap_MultiUnit_" },
 	-- "Dispel" "Purifier" 527 -- UNAVAILABLE IN SHADOW FORM 15473
 
-	-- "Vampiric Touch" 34914 
-	{ 34914, not jps.Moving and UnitHealth(rangedTarget) > 120000 and not jps.myDebuff(34914,rangedTarget) and not jps.myLastCast(34914) , rangedTarget , "VT_On_" },
 	-- "Vampiric Touch" 34914 Keep VT up with duration
 	{ 34914, not jps.Moving and UnitHealth(rangedTarget) > 120000 and jps.myDebuff(34914,rangedTarget) and jps.myDebuffDuration(34914,rangedTarget) < (1.055*2) and not jps.myLastCast(34914) , rangedTarget , "VT_Keep_" },
 	-- "Shadow Word: Pain" 589 Keep SW:P up with duration
 	{ 589, jps.myDebuff(589,rangedTarget) and jps.myDebuffDuration(589,rangedTarget) < (1.055*2) and not jps.myLastCast(589) , rangedTarget , "Pain_Keep_"..rangedTarget },
+	-- "Vampiric Touch" 34914 
+	{ 34914, not jps.Moving and UnitHealth(rangedTarget) > 120000 and not jps.myDebuff(34914,rangedTarget) and not jps.myLastCast(34914) , rangedTarget , "VT_On_" },
 	-- "Shadow Word: Pain" 589 Keep up
 	{ 589, (not jps.myDebuff(589,rangedTarget)) and not jps.myLastCast(589) , rangedTarget , "Pain_On_"..rangedTarget},
 	

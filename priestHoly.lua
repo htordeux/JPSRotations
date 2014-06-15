@@ -253,7 +253,7 @@ local InterruptTable = {
 	local ImportantUnitName = GetUnitName(LowestImportantUnit)
 	local MessageInfo = {
 		{jps.buffId(81208),"SERENITY:|cffa335ee "..ImportantUnitName},
-		{jps.buffId(81209),"CHASTISE:|cffa335ee "..rangedTarget},
+		{jps.buffId(81209),"CHASTISE:|cffa335ee "},
 		{jps.buffId(81206),"SANCTUARY"},
 	}
 	
