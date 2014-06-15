@@ -8,7 +8,7 @@ priestConfig = mConfig:createConfig("priest Config","priestDisc","Default",{"/pd
 -- mConfig:addSlider(key, text, tooltip, minValue, maxValue, defaultValue,stepSize)
 priestConfig:addSlider("HealthEmergency", "HealthLoss Threshold Emergency" , " % Health Loss for Emergency Heal" , 35, 90, 75, 5)
 priestConfig:addSlider("HealthDPS", "HealthLoss Threshold DPS" , " % Health Loss for DPS EnemyUnit" , 50, 100, 85, 5)
-priestConfig:addSlider("HealthRaid", "HealthLoss Threshold RAID" , " % Health Loss for Raid Heal" , 35, 90, 60, 5)
+priestConfig:addSlider("HealthRaid", "HealthLoss Threshold RAID" , " % Health Loss for Raid Heal" , 35, 90, 75, 5)
 
 -- testConfig:addCheckBox("checkTest", "CheckBox Text: ".. veryLongText, "CheckBox Tooltip Text", false)
 priestConfig:addText("Spell Usage")	
