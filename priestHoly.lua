@@ -380,7 +380,6 @@ local spellTable = {
 --	},
 	
 	-- "Mass Dispel" 32375 "Dissipation de masse"
-	--{ 32375 , type(MassDispellTarget) == "string" , MassDispellTarget , "|cff1eff00MassDispell_MultiUnit_" },
 	-- OFFENSIVE Dispel -- "Dissipation de la magie" 528
 	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive(rangedTarget) and LowestImportantUnitHpct > 0.50 , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
 	-- "Mot de l'ombre : Mort" 32379 -- FARMING OR PVP -- NOT PVE

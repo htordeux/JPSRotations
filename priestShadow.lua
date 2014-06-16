@@ -74,6 +74,7 @@ local EnemyCount = jps.RaidEnemyCount()
 if canDPS("mouseover") and not jps.UnitExists("focus") then
 	if jps.UnitIsUnit("mouseovertarget","player") then
 		jps.Macro("/focus mouseover")
+		local name = GetUnitName("focus")
 		print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
 	end
 end
@@ -126,15 +127,6 @@ local VampEnemyTarget = nil
 for _,unit in ipairs(EnemyUnit) do 
 	if not jps.myDebuff(34914,unit) and not jps.myLastCast(34914) then
 		VampEnemyTarget = unit
-	break end
-end
-
-local MassDispellTarget = nil
-for _,unit in ipairs(EnemyUnit) do
-	if jps.buff(divineshield,unit) then
-		MassDispellTarget = unit
-		jps.Macro("/target "..MassDispellTarget)
-		print("Enemy |cff1eff00 "..name.." |cffffffffDIVINE SHIELD")
 	break end
 end
 
@@ -300,8 +292,6 @@ local spellTable = {
 	{ 15286, AvgHealthLoss < priest.get("HealthDPS")/100 , "player" },
 
 	-- "Mass Dispel" 32375 "Dissipation de masse"
-	--{ 32375 , type(MassDispellTarget) == "string" , MassDispellTarget , "|cff1eff00MassDispell_MultiUnit_" },
-
 	-- OFFENSIVE Dispel -- "Dissipation de la magie" 528
 	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive(rangedTarget) , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
 	-- "Leap of Faith" 73325 -- "Saut de foi"
