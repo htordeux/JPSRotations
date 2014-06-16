@@ -47,6 +47,7 @@ local playermana = UnitPower ("player",0)/UnitPowerMax ("player",0)
 -- HELPER
 ----------------------
 
+local GCD = jps.GCD
 local Orbs = UnitPower("player",13)
 local NaaruGift = tostring(select(1,GetSpellInfo(59544))) -- NaaruGift 59544
 local Desesperate = tostring(select(1,GetSpellInfo(19236))) -- "Prière du désespoir" 19236
@@ -54,7 +55,7 @@ local MindBlast = tostring(select(1,GetSpellInfo(8092))) -- "Mind Blast" 8092
 local VampTouch = tostring(select(1,GetSpellInfo(34914)))
 local ShadowPain = tostring(select(1,GetSpellInfo(589)))
 local MindSear = tostring(select(1,GetSpellInfo(48045)))
-	
+
 ---------------------
 -- TIMER
 ---------------------
@@ -76,7 +77,7 @@ if canDPS("mouseover") and not jps.UnitExists("focus") then
 		print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
 	end
 end
---if not canDPS("focus") then jps.Macro("/clearfocus") end
+if not canDPS("focus") then jps.Macro("/clearfocus") end
 
 if canDPS("target") then rangedTarget =  "target"
 elseif canDPS("targettarget") then rangedTarget = "targettarget"
@@ -84,7 +85,10 @@ elseif canDPS("focustarget") then rangedTarget = "focustarget"
 elseif canDPS("mouseover") then rangedTarget = "mouseover"
 end
 
-if canDPS(rangedTarget) then jps.Macro("/target "..rangedTarget) end
+if canDPS(rangedTarget) then
+	jps.Macro("/target "..rangedTarget)
+end
+
 
 ------------------------
 -- LOCAL FUNCTIONS ENEMY
@@ -130,22 +134,13 @@ for _,unit in ipairs(EnemyUnit) do
 	if jps.buff(divineshield,unit) then
 		MassDispellTarget = unit
 		jps.Macro("/target "..MassDispellTarget)
+		print("Enemy |cff1eff00 "..name.." |cffffffffDIVINE SHIELD")
 	break end
 end
 
 ----------------------------
 -- LOCAL FUNCTIONS FRIENDS
 ----------------------------
-
-local VoidShiftFriend = nil
-for _,unit in ipairs(FriendUnit) do
-	local role = UnitGroupRolesAssigned(unit)
-	if role == "HEALER" then
-		if jps.hp(unit) < 0.35 and not playerAggro and UnitIsUnit(unit,"player")~=1 and jps.hp("player") > 0.85 and jps.UseCDs then 
-			VoidShiftFriend = unit
-		break end
-	end
-end
 
 local LeapFriend = nil
 local LeapFriendFlag = nil 
@@ -279,15 +274,12 @@ local spellTable = {
 	-- "Devouring Plague" 2944 -- orbs < 3 if timetodie < few sec
 	{ 2944, Orbs > 0 and jps.hp(rangedTarget) < 0.20 and not jps.buff(124430) , rangedTarget , "ORBS_20%_NoBuff" },
 	{ 2944, Orbs > 1 and jps.hp(rangedTarget) < 0.20 , rangedTarget , "ORBS_2_" },
-	{ 2944, Orbs > 1 and jps.myDebuffDuration(34914,rangedTarget) > (6 + 1.055*3) and jps.myDebuffDuration(589,rangedTarget) > (6 + 1.055*3) , rangedTarget , "ORBS_2_Buff_" },
+	{ 2944, Orbs > 1 and jps.myDebuffDuration(34914,rangedTarget) > (6 + GCD*3) and jps.myDebuffDuration(589,rangedTarget) > (6 + GCD*3) , rangedTarget , "ORBS_2_Buff_" },
 	
 	-- FOCUS CONTROL
 	{ "nested", canDPS("focus") and not jps.LoseControl("focus") , parseControlFocus },
 	{ "nested", not jps.LoseControl(rangedTarget) , parseControl },
 	{ "nested", playerAggro , parseAggro },
-
-	-- "Void Shift" 108968 -- "Dispersion" 47585
-	{ 108968, jps.UseCDs and type(VoidShiftFriend) == "string" and jps.cooldown(47585) == 0 , VoidShiftFriend , "Emergency_VoidShift_" },
 
 	-- "Mind Blast" 8092 -- "Glyph of Mind Spike" 33371 gives buff 81292 
 	{ 8092, (jps.buffStacks(81292) == 2) , rangedTarget , "Blast" },
@@ -299,7 +291,7 @@ local spellTable = {
 	{ 32379, jps.hp(rangedTarget) < 0.20 , rangedTarget, "castDeath_"..rangedTarget },
 	{ 32379, type(DeathEnemyTarget) == "string" , DeathEnemyTarget , "Death_MultiUnit_" },
 	-- "Mind Spike" 73510 -- "From Darkness, Comes Light" 109186 gives buff -- "Surge of Darkness" 87160 -- 10 sec
-	{ 73510, jps.buff(87160) and jps.buffDuration(87160) < (1.055*4) , rangedTarget },
+	{ 73510, jps.buff(87160) and jps.buffDuration(87160) < (GCD*4) , rangedTarget },
 	{ 73510, jps.buff(87160) and jps.myDebuff(34914,rangedTarget) , rangedTarget }, -- debuff "Vampiric Touch" 34914
 	{ 73510, jps.buff(87160) and jps.myDebuff(589,rangedTarget) , rangedTarget }, -- debuff "Shadow Word: Pain" 589
 
@@ -318,9 +310,9 @@ local spellTable = {
 	-- "Dispel" "Purifier" 527 -- UNAVAILABLE IN SHADOW FORM 15473
 
 	-- "Vampiric Touch" 34914 Keep VT up with duration
-	{ 34914, not jps.Moving and UnitHealth(rangedTarget) > 120000 and jps.myDebuff(34914,rangedTarget) and jps.myDebuffDuration(34914,rangedTarget) < (1.055*2) and not jps.myLastCast(34914) , rangedTarget , "VT_Keep_" },
+	{ 34914, not jps.Moving and UnitHealth(rangedTarget) > 120000 and jps.myDebuff(34914,rangedTarget) and jps.myDebuffDuration(34914,rangedTarget) < (GCD*2) and not jps.myLastCast(34914) , rangedTarget , "VT_Keep_" },
 	-- "Shadow Word: Pain" 589 Keep SW:P up with duration
-	{ 589, jps.myDebuff(589,rangedTarget) and jps.myDebuffDuration(589,rangedTarget) < (1.055*2) and not jps.myLastCast(589) , rangedTarget , "Pain_Keep_"..rangedTarget },
+	{ 589, jps.myDebuff(589,rangedTarget) and jps.myDebuffDuration(589,rangedTarget) < (GCD*2) and not jps.myLastCast(589) , rangedTarget , "Pain_Keep_"..rangedTarget },
 	-- "Vampiric Touch" 34914 
 	{ 34914, not jps.Moving and UnitHealth(rangedTarget) > 120000 and not jps.myDebuff(34914,rangedTarget) and not jps.myLastCast(34914) , rangedTarget , "VT_On_" },
 	-- "Shadow Word: Pain" 589 Keep up

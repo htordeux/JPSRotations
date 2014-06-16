@@ -201,7 +201,9 @@ local priestHolyPvP = function()
 	elseif canDPS("mouseover") then rangedTarget = "mouseover"
 	end
 	-- if your target is friendly keep it as target
-	if not jps.canHeal("target") and canDPS(rangedTarget) then jps.Macro("/target "..rangedTarget) end
+	if not jps.canHeal("target") and canDPS(rangedTarget) then
+		jps.Macro("/target "..rangedTarget)
+	end
 
 ------------------------
 -- LOCAL FUNCTIONS ENEMY
