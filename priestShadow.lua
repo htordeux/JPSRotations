@@ -288,7 +288,7 @@ local spellTable = {
 	{ 73510, jps.buff(87160) and jps.myDebuff(589,rangedTarget) , rangedTarget }, -- debuff "Shadow Word: Pain" 589
 	
 	-- "Vampiric Touch" 34914
-	{ 34914, not jps.Moving and playermana < 0.50 and type(VampEnemyTarget) == "string" , VampEnemyTarget , "Vamp_MultiUnit_" },
+	{ 34914, not jps.Moving and playermana < 0.50 and type(VampEnemyTarget) == "string" , VampEnemyTarget , "Vamp_MultiUnit_Mana_" },
 
 	{ "nested", playerhealthpct < priest.get("HealthEmergency")/100 , parseHeal },
 	-- "Vampiric Embrace" 15286
@@ -316,7 +316,7 @@ local spellTable = {
 	{ 123040, priest.canShadowfiend(rangedTarget) , rangedTarget },
 	
 	-- "Cascade" Holy 121135 Shadow 127632
-	{ 127632, EnemyCount > 2 and priest.get("Cascade") , rangedTarget , "Cascade_"  },
+	{ 127632, EnemyCount > 3 and priest.get("Cascade") , rangedTarget , "Cascade_"  },
 	-- "MindSear" 48045
 	{  48045, not jps.Moving and jps.MultiTarget and EnemyCount > 4 and priest.get("MindSear") , rangedTarget  },
 	-- "Shadow Word: Pain" 589
