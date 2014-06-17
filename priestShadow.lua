@@ -317,7 +317,7 @@ local spellTable = {
 	
 	-- "Cascade" Holy 121135 Shadow 127632
 	{ 127632, EnemyCount > 2 and priest.get("Cascade") , rangedTarget , "Cascade_"  },
-	-- MULTITARGET
+	-- "MindSear" 48045
 	{  48045, not jps.Moving and jps.MultiTarget and EnemyCount > 4 and priest.get("MindSear") , rangedTarget  },
 	-- "Shadow Word: Pain" 589
 	{ 589, type(PainEnemyTarget) == "string" , PainEnemyTarget , "Pain_MultiUnit_" },	
