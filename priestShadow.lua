@@ -70,7 +70,7 @@ local playerControlled = jps.LoseControl("player",{"CC"})
 local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
 local EnemyCount = jps.RaidEnemyCount()
 -- set focus an enemy targeting you
-if canDPS("mouseover") and not jps.UnitExists("focus") then
+if jps.UnitExists("mouseover") and not jps.UnitExists("focus") and canDPS("mouseover") then
 	if jps.UnitIsUnit("mouseovertarget","player") then
 		jps.Macro("/focus mouseover")
 		local name = GetUnitName("focus")
@@ -88,7 +88,6 @@ end
 if canDPS(rangedTarget) then
 	jps.Macro("/target "..rangedTarget)
 end
-
 
 ------------------------
 -- LOCAL FUNCTIONS ENEMY
@@ -325,7 +324,7 @@ local spellTable = {
 	{ 34914, not jps.Moving and type(VampEnemyTarget) == "string" , VampEnemyTarget , "Vamp_MultiUnit_" },
 
 	-- "Power Infusion" "Infusion de puissance" 10060
-	{ 10060, UnitAffectingCombat("player")==1 and (UnitPower ("player",0)/UnitPowerMax ("player",0) > 0.20) , "player" },
+	{ 10060, UnitAffectingCombat("player")==1 , "player" },
 
 	-- "Mind Flay" 15407 -- "Devouring Plague" 2944 -- "Shadow Word: Pain" 589
 	{ 15407, jps.IsSpellKnown(139139) and jps.debuff(2944,rangedTarget) and jps.myDebuffDuration(2944,rangedTarget) < jps.myDebuffDuration(589,rangedTarget) and jps.myDebuff(34914,rangedTarget) , rangedTarget , "MINDFLAYORBS_" },

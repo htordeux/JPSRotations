@@ -185,8 +185,8 @@ local priestHolyPvP = function()
 ---------------------
 
 	local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
-	-- set focus a senemy healer or enemy targeting you
-	if jps.UnitExists("mouseover") and not jps.UnitExists("focus") then
+	-- set focus an enemy targeting you
+	if jps.UnitExists("mouseover") and not jps.UnitExists("focus") and canDPS("mouseover") then
 		if jps.UnitIsUnit("mouseovertarget","player") then
 			jps.Macro("/focus mouseover")
 			local name = GetUnitName("focus")
@@ -201,9 +201,7 @@ local priestHolyPvP = function()
 	elseif canDPS("mouseover") then rangedTarget = "mouseover"
 	end
 	-- if your target is friendly keep it as target
-	if not jps.canHeal("target") and canDPS(rangedTarget) then
-		jps.Macro("/target "..rangedTarget)
-	end
+	if not jps.canHeal("target") and canDPS(rangedTarget) then jps.Macro("/target "..rangedTarget) end
 
 ------------------------
 -- LOCAL FUNCTIONS ENEMY

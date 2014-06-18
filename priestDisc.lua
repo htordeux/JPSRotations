@@ -157,12 +157,12 @@ local priestDiscPvP = function()
 ---------------------
 
 	local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
-	-- set focus a senemy healer or enemy targeting you
-	if jps.UnitExists("mouseover") and not jps.UnitExists("focus") then
-		if jps.RoleClass("mouseover") == "HEALER" then
+	-- set focus an enemy targeting you
+	if jps.UnitExists("mouseover") and not jps.UnitExists("focus") and canDPS("mouseover") then
+		if jps.UnitIsUnit("mouseovertarget","player") then
 			jps.Macro("/focus mouseover")
-		elseif jps.UnitIsUnit("mouseovertarget","player") then
-			jps.Macro("/focus mouseover")
+			local name = GetUnitName("focus")
+			print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
 		end
 	end
 	if not canDPS("focus") then jps.Macro("/clearfocus") end
@@ -209,7 +209,7 @@ local InterruptTable = {
 	if jps.ChannelTimeLeft() > 0 then return nil end
 -- Avoid Overhealing
 	priest.ShouldInterruptCasting( InterruptTable , AvgHealthLoss ,  CountInRange )
-	
+
 ------------------------
 -- LOCAL TABLES
 ------------------------

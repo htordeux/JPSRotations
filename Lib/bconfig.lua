@@ -18,7 +18,6 @@ MessageInfoFrame:SetBackdropColor(0,0,0,0)
 
 MessageInfoFrame:ClearAllPoints()
 MessageInfoFrame:SetSize(250,50)
-
 MessageInfoFrame:SetPoint("CENTER", 0, 200)
 MessageInfoFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 
@@ -35,7 +34,6 @@ MessageInfoFrame.text:SetJustifyH("CENTER") -- CENTER LEFT RIGHT
 MessageInfoFrame.text:SetJustifyV("MIDDLE") -- BOTTOM MIDDLE TOP
 
 MessageInfoFrame:Hide()
---MessageInfoFrame.text:Hide()
 
 jps.MessageInfo = {}
 jps.listener.registerEvent("ACTIVE_TALENT_GROUP_CHANGED", function() jps.MessageInfo = {} end)
@@ -45,11 +43,8 @@ local UpdateMessageInfo = function ()
 			MessageInfoFrame:Show()
 			MessageInfoFrame.text:SetText(info[2])
 		break end
-		MessageInfoFrame:Hide()
 	end
-	if not jps.Combat then
-		MessageInfoFrame:Hide()
-	end
+	if not jps.Combat then MessageInfoFrame:Hide() end
 end
 
 local MessageInfoFrame_OnUpdate = CreateFrame("Frame")
