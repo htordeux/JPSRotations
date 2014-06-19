@@ -186,6 +186,15 @@ local priestHolyPvP = function()
 ---------------------
 
 	local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
+	
+	local HealerEnemyTarget = nil
+	for _,unit in ipairs(EnemyUnit) do 
+		local unitguid = UnitGUID(unit)
+		if jps.EnemyHealer[unitguid] then
+			HealerEnemyTarget = unit
+		break end
+	end
+
 	-- set focus an enemy targeting you
 	if jps.UnitExists("mouseover") and not jps.UnitExists("focus") and canDPS("mouseover") then
 		if jps.UnitIsUnit("mouseovertarget","player") then
@@ -482,14 +491,14 @@ local spellTable = {
 					{ 2061, stackSerendip < 2, "Emergency_SoinsRapides_"..LowestImportantUnit },
 				},
 			},
-			-- "Power Word: Shield" 17 
-			{ 17, LowestImportantUnitHpct < 0.50 and not jps.buff(17,LowestImportantUnit) and not jps.debuff(6788,LowestImportantUnit) , LowestImportantUnit , "Emergency_Shield_"..LowestImportantUnit },
 			-- "Circle of Healing" 34861
 			{ 34861, AvgHealthLoss < priest.get("HealthDPS")/100 , LowestImportantUnit , "Emergency__COH_"..LowestImportantUnit },
 			-- "Don des naaru" 59544
 			{ 59544, (select(2,GetSpellBookItemInfo(priest.Spell["NaaruGift"]))~=nil) , LowestImportantUnit , "Emergency_Naaru_"..LowestImportantUnit },
 			-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
 			{ 139, not jps.buff(139,LowestImportantUnit) , LowestImportantUnit , "Emergency_Renew_"..LowestImportantUnit },
+			-- "Power Word: Shield" 17 
+			{ 17, LowestImportantUnitHpct < 0.50 and not jps.buff(17,LowestImportantUnit) and not jps.debuff(6788,LowestImportantUnit) , LowestImportantUnit , "Emergency_Shield_"..LowestImportantUnit },
 		},
 	},
 	

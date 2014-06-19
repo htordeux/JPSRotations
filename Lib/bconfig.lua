@@ -1,6 +1,114 @@
 ------------------------------------
+-- MARKER
+------------------------------------
+
+-- isArena, isRegistered = IsActiveBattlefieldArena()
+-- isArena - 1 if player is in an Arena match; otherwise nil
+-- IsInRaid() Boolean - returns true if the player is currently in a raid group, false otherwise
+-- IsInGroup() Boolean - returns true if the player is in a some kind of group, otherwise false
+
+-- leader = UnitIsRaidOfficer("unit") -- 1 if the unit is a raid assistant; otherwise nil or false if not in raid
+-- leader = UnitIsGroupLeader("unit") -- true if the unit is a raid assistant; otherwise false (bool)
+local IsRaidLeader = jps.IsRaidLeader()
+local PlayerIsLeader = function()
+	if IsInRaid() and IsRaidLeader > 0 then return true end
+	if not IsInRaid() and not IsInGroup() then return true end
+	return false
+end
+
+--	  0 - Clear any raid target markers
+--    1 - Star
+--    2 - Circle
+--    3 - Diamond
+--    4 - Triangle
+--    5 - Moon
+--    6 - Square
+--    7 - Cross
+--    8 - Skull
+
+-- {"skull",false,8} keep it for target to kill
+local MarkerTable = { {"Circle",false,2}, {"star",false,1}, {"triangle",false,4}, {"cross",false,7} }
+local resetMarkerTable = function()
+	MarkerTable = { {"Circle",false,2}, {"star",false,1}, {"triangle",false,4}, {"cross",false,7} }
+end
+
+hooksecurefunc("SetRaidTarget",function(unit, index)
+	SetRaidTarget(unit, index)
+end)
+
+jps.TargetMarker = function(unit,num)
+	if unit == nil then return end
+	local playerAssistRaid = PlayerIsLeader()
+	if not playerAssistRaid then return end
+	if IsAltKeyDown() then SetRaidTarget("target",0) return end
+
+	if type(num) == "number" then
+		if GetRaidTargetIndex(unit) == nil then SetRaidTarget(unit, num)
+		elseif GetRaidTargetIndex(unit) ~= num then SetRaidTarget(unit, num) end
+	return end
+
+	if GetRaidTargetIndex(unit) == nil then
+		for _,index in ipairs(MarkerTable) do
+			if index[2] == false then
+				SetRaidTarget(unit, index[3])
+				index[2] = true
+			break end
+		end
+	end
+	-- if all MarkerTable are true reset the table
+	if GetRaidTargetIndex(unit) == nil then
+		resetMarkerTable()
+	end
+end
+
+------------------------------------
+-- MOUSEOVER HEALER
+------------------------------------
+
+-- EnemyHealer[UnitGUId] = {"MONK",Name}
+jps.listener.registerEvent("UPDATE_MOUSEOVER_UNIT", function()
+	if jps.getConfigVal("set healer as focus") == 1 then
+		if jps.RoleInRaid("mouseover") == "HEALER" then
+			jps.TargetMarker("mouseover")
+		end
+	end
+end)
+
+------------------------------------
 -- BUTTON
 ------------------------------------
+
+local button = CreateFrame("Button","TargetMArker", UIParent, "SecureActionButtonTemplate")
+
+button:ClearAllPoints()
+button:SetSize(40, 40)
+button:SetPoint("TOP",0,-50) -- button:SetPoint(point, ofsx, ofsy)
+
+button:EnableMouse(true)
+button:SetMovable(true)
+button:RegisterForClicks("LeftButtonUp","RightButtonUp")
+button:RegisterForDrag("LeftButton")
+button:SetScript("OnDragStart", button.StartMoving)
+button:SetScript("OnDragStop", button.StopMovingOrSizing) 
+
+button.texture = button:CreateTexture("ARTWORK") -- create the icon texture
+button.texture:SetPoint('TOPRIGHT', button, -2, -2)
+button.texture:SetPoint('BOTTOMLEFT', button, 2, 2)
+button.texture:SetTexCoord(0.07, 0.93, 0.07, 0.93) -- cut off the blizzard border
+button.texture:SetTexture("INTERFACE/TARGETINGFRAME/UI-RaidTargetingIcon_8") -- set the default texture
+
+--local marker = "/run SetRaidTargetIcon('target', 8)"
+--button:SetAttribute("type","macro")
+--button:SetAttribute("macrotext", marker);
+--button:SetAttribute("macro","Marker")
+
+--button:SetAttribute("type","worldmarker")
+--button:SetAttribute("action", "set")
+--button:SetAttribute("marker", 8)
+
+--button:SetScript("OnClick", function() jps.TargetMarker("target",8) end)
+
+button:Hide()
 
 ------------------------------------
 -- MESSAGEINFOFRAME http://wowprogramming.com/forums/development/633
