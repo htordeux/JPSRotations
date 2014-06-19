@@ -195,6 +195,10 @@ local priestHolyPvP = function()
 		break end
 	end
 
+	if type(HealerEnemyTarget) == "string" and not jps.UnitExists("focus") and canDPS(HealerEnemyTarget) then
+		jps.Macro("/focus "..HealerEnemyTarget)
+	end
+
 	-- set focus an enemy targeting you
 	if jps.UnitExists("mouseover") and not jps.UnitExists("focus") and canDPS("mouseover") then
 		if jps.UnitIsUnit("mouseovertarget","player") then
@@ -488,7 +492,7 @@ local spellTable = {
 					-- "Soins de lien"
 					{ 32546 , type(BindingHealTarget) == "string" , BindingHealTarget , "Emergency_Lien_" },
 					-- "Soins rapides" 2061
-					{ 2061, stackSerendip < 2, "Emergency_SoinsRapides_"..LowestImportantUnit },
+					{ 2061, stackSerendip < 2, LowestImportantUnit , "Emergency_SoinsRapides_"..LowestImportantUnit },
 				},
 			},
 			-- "Circle of Healing" 34861
@@ -520,7 +524,7 @@ local spellTable = {
 			-- "Soins de lien"
 			{ 32546 , type(BindingHealTarget) == "string" , BindingHealTarget , "Lien_" },					
 			-- "Soins rapides" 2061
-			{ 2061, (LowestImportantUnitHealth > priest.AvgAmountGreatHeal) and stackSerendip < 2, "SoinsRapides_"..LowestImportantUnit },
+			{ 2061, (LowestImportantUnitHealth > priest.AvgAmountGreatHeal) and stackSerendip < 2, LowestImportantUnit, "SoinsRapides_"..LowestImportantUnit },
 		},
 	},
 

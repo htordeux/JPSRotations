@@ -237,6 +237,8 @@ local parseHeal = {
 	{ 139, not jps.buff(139,"player"), "player" },
 	-- "Prayer of Mending" "Prière de guérison" 33076 
 	{ 33076, playerAggro and not jps.buff(33076,"player") , "player" },
+	-- "Soins rapides" 2061
+	{ 2061, playerhealthpct < 0.40 , "player" , "Emergency_SoinsRapides_" },
 }
 
 local parseAggro = {
