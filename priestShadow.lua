@@ -4,6 +4,7 @@ local canDPS = jps.canDPS
 local UnitClass = UnitClass
 local UnitGroupRolesAssigned = UnitGroupRolesAssigned
 local UnitChannelInfo = UnitChannelInfo
+local UnitGUID = UnitGUID
 
 local ClassEnemy = {
 	["WARRIOR"] = "cac",
@@ -96,7 +97,11 @@ end
 local FearEnemyTarget = nil
 for _,unit in ipairs(EnemyUnit) do 
 	if priest.canFear(unit) and not jps.LoseControl(unit) then
-		FearEnemyTarget = unit
+		if jps.IsCastingControl(unit) then
+			FearEnemyTarget = unit
+		elseif jps.shouldKickDelay(unit) then
+			FearEnemyTarget = unit
+		end
 	break end
 end
 
@@ -184,6 +189,7 @@ if jps.ChannelTimeLeft() > 0 then return nil end
 
 local parseControl = {
 	-- "Psychic Scream" "Cri psychique" 8122 -- FARMING OR PVP -- NOT PVE -- debuff same ID 8122
+	{ 8122, type(FearEnemyTarget) == "string" , FearEnemyTarget , "FEAR_MultiUnit_" },
 	{ 8122, priest.canFear(rangedTarget) , rangedTarget , "Fear_"..rangedTarget },
 	-- "Silence" 15487
 	{ 15487, type(SilenceEnemyTarget) == "string" , SilenceEnemyTarget , "Silence_MultiUnit_" },
