@@ -208,9 +208,7 @@ local parseControl = {
 	{ 15487, type(SilenceEnemyTarget) == "string" , SilenceEnemyTarget , "Silence_MultiUnit_" },
 	{ 15487, EnemyCaster(rangedTarget) == "caster" , rangedTarget , "Silence_Caster_"..rangedTarget },
 	-- "Psychic Horror" 64044 "Horreur psychique" -- 30 yd range
-	{ 64044, jps.canCast(64044,rangedTarget) and EnemyCaster(rangedTarget) == "caster" and Orbs < 2 , rangedTarget , "Psychic Horror_"..rangedTarget },
-	{ 64044, jps.canCast(64044,rangedTarget) and EnemyCaster(rangedTarget) == "cac" and Orbs == 0 , rangedTarget , "Psychic Horror_Cac_"..rangedTarget },
-	{ 64044, jps.canCast(64044,rangedTarget) and EnemyCaster(rangedTarget) == "cac" and jps.UnitIsUnit("targettarget","player") and playerAggro , rangedTarget , "Psychic Horror_Cac_"..rangedTarget },
+	{ 64044, jps.canCast(64044,rangedTarget) and EnemyCaster(rangedTarget) == "cac" and Orbs < 2 , rangedTarget , "Psychic Horror_"..rangedTarget },
 	-- "Psyfiend" 108921 Démon psychique
 	{ 108921, playerAggro and priest.canFear(rangedTarget) , rangedTarget },
 	-- "Void Tendrils" 108920 -- debuff "Void Tendril's Grasp" 114404

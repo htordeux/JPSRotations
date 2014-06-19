@@ -179,6 +179,17 @@ local priestDiscPvP = function()
 -- LOCAL FUNCTIONS ENEMY
 ------------------------
 
+	local FearEnemyTarget = nil
+	for _,unit in ipairs(EnemyUnit) do 
+		if priest.canFear(unit) and not jps.LoseControl(unit) then
+			if jps.IsCastingControl(unit) then
+				FearEnemyTarget = unit
+			elseif jps.shouldKickDelay(unit) then
+				FearEnemyTarget = unit
+			end
+		break end
+	end
+
 	local DeathEnemyTarget = nil
 	for _,unit in ipairs(EnemyUnit) do 
 		if priest.canShadowWordDeath(unit) then 
@@ -242,7 +253,7 @@ local InterruptTable = {
 	--TANK Buff Spirit Shell 114908
 		{ 2061, jps.buffId(114908,LowestImportantUnit) and (UnitGetTotalAbsorbs(LowestImportantUnit) <= priest.AvgAmountFlashHeal) , LowestImportantUnit , "Carapace_Buff_SoinsRapides_"..LowestImportantUnit },
 		{ 2060, jps.buffId(114908,LowestImportantUnit) and (UnitGetTotalAbsorbs(LowestImportantUnit) <= priest.AvgAmountFlashHeal) , LowestImportantUnit , "Carapace_Buff_SoinsSup_"..LowestImportantUnit },
-		--{ 2050, jps.buffId(114908,LowestImportantUnit) and (UnitGetTotalAbsorbs(LowestImportantUnit) > priest.AvgAmountFlashHeal) , LowestImportantUnit , "Carapace_Buff_Soins_"..LowestImportantUnit },
+		{ 2050, jps.buffId(114908,LowestImportantUnit) and (UnitGetTotalAbsorbs(LowestImportantUnit) > priest.AvgAmountFlashHeal) , LowestImportantUnit , "Carapace_Buff_Soins_"..LowestImportantUnit },
 	}
 	
 	parseControl = {
