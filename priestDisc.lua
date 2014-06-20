@@ -18,6 +18,9 @@ priestConfig:addCheckBox("ShadowPain", "use ShadowPain", "use ShadowPain in Comb
 priestConfig:addCheckBox("Cascade", "use Cascade", "use Cascade in Combat", true)
 priestConfig:addCheckBox("MindSear", "use MindSear", "use MindSear in Combat", true)
 
+priestConfig:addText("CheckBox for FOCUS")	
+priestConfig:addCheckBox("KeepFocus", "use Focus", "keep Focus set manually", true)
+
 
 function priest.get(name)
     return priestConfig:get(name)

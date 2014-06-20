@@ -40,7 +40,7 @@ jps.TargetMarker = function(unit,num)
 	if unit == nil then return end
 	local playerAssistRaid = PlayerIsLeader()
 	if not playerAssistRaid then return end
-	if IsAltKeyDown() then SetRaidTarget("target",0) return end
+	if IsControlKeyDown() then SetRaidTarget("target",0) return end
 
 	if type(num) == "number" then
 		if GetRaidTargetIndex(unit) == nil then SetRaidTarget(unit, num)
@@ -85,13 +85,13 @@ end
 --end)
 
 ------------------------------------
--- BUTTON
+-- BUTTON for Mconfig
 ------------------------------------
 
-local button = CreateFrame("Button","TargetMArker", UIParent, "SecureActionButtonTemplate")
+local button = CreateFrame("Button","MacroButton", UIParent, "SecureActionButtonTemplate")
 
 button:ClearAllPoints()
-button:SetSize(40, 40)
+button:SetSize(36, 36)
 button:SetPoint("TOP",0,-50) -- button:SetPoint(point, ofsx, ofsy)
 
 button:EnableMouse(true)
@@ -107,18 +107,11 @@ button.texture:SetPoint('BOTTOMLEFT', button, 2, 2)
 button.texture:SetTexCoord(0.07, 0.93, 0.07, 0.93) -- cut off the blizzard border
 button.texture:SetTexture("INTERFACE/TARGETINGFRAME/UI-RaidTargetingIcon_8") -- set the default texture
 
---local marker = "/run SetRaidTargetIcon('target', 8)"
---button:SetAttribute("type","macro")
---button:SetAttribute("macrotext", marker);
---button:SetAttribute("macro","Marker")
+button:SetAttribute("type","macro")
+button:SetAttribute("macrotext", "/pd");
+--button:SetAttribute("macro","Marker") -- Name of Macro
 
---button:SetAttribute("type","worldmarker")
---button:SetAttribute("action", "set")
---button:SetAttribute("marker", 8)
-
---button:SetScript("OnClick", function() jps.TargetMarker("target",8) end)
-
-button:Hide()
+--button:Hide()
 
 ------------------------------------
 -- MESSAGEINFOFRAME http://wowprogramming.com/forums/development/633
