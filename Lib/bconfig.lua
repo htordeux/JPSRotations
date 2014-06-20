@@ -65,14 +65,24 @@ end
 -- MOUSEOVER HEALER
 ------------------------------------
 
--- EnemyHealer[UnitGUId] = {"MONK",Name}
-jps.listener.registerEvent("UPDATE_MOUSEOVER_UNIT", function()
-	if jps.getConfigVal("set healer as focus") == 1 then
-		if jps.RoleInRaid("mouseover") == "HEALER" then
-			jps.TargetMarker("mouseover")
-		end
-	end
-end)
+--jps.listener.registerEvent("UPDATE_MOUSEOVER_UNIT", function()
+--	if jps.getConfigVal("set healer as focus") == 1 then
+--		if jps.RoleInRaid("mouseover") == "HEALER" then
+--			jps.TargetMarker("mouseover")
+--		end
+--	end
+--end)
+
+--jps.listener.registerEvent("UPDATE_MOUSEOVER_UNIT", function()
+--	if jps.getConfigVal("set healer as focus") == 1 then
+--		local unitGuidMouseover = UnitGUID("mouseover")
+--		if EnemyHealer[unitGuidMouseover] and canDPS("mouseover") then
+--			local class = EnemyHealer[unitGuidMouseover][1]
+--			local name = EnemyHealer[unitGuidMouseover][2]
+--			print("Enemy HEALER|cff1eff00 "..name.." |cffffffffClass|cff1eff00 "..class.." |cffffffffcan be DPS")
+--		end
+--	end
+--end)
 
 ------------------------------------
 -- BUTTON

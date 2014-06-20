@@ -44,7 +44,7 @@ local UnitGetTotalAbsorbs = UnitGetTotalAbsorbs
 -- ROTATION
 ----------------------------
 
-local priestDiscPvP = function()
+local priestDisc = function()
 
 ----------------------------
 -- TABLE GLOBAL MESSAGE FRAME
@@ -157,16 +157,7 @@ local priestDiscPvP = function()
 ---------------------
 
 	local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
-	-- set focus an enemy targeting you
-	if jps.UnitExists("mouseover") and not jps.UnitExists("focus") and canDPS("mouseover") then
-		if jps.UnitIsUnit("mouseovertarget","player") then
-			jps.Macro("/focus mouseover")
-			local name = GetUnitName("focus")
-			print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
-		end
-	end
-	if not canDPS("focus") then jps.Macro("/clearfocus") end
-	
+
 	if canDPS("target") then rangedTarget =  "target"
 	elseif canDPS("targettarget") then rangedTarget = "targettarget"
 	elseif canDPS("focustarget") then rangedTarget = "focustarget"
@@ -437,7 +428,7 @@ local InterruptTable = {
 	return spell,target
 end
 
-jps.registerRotation("PRIEST","DISCIPLINE", priestDiscPvP, "Disc Priest Custom", false , true)
+jps.registerRotation("PRIEST","DISCIPLINE", priestDisc, "Disc Priest Custom", false , true)
 
 -- Divine Star belong to schools that are not used by any of the class's other spells. When these spells are instant cast, this means that it is not possible for that spell to be locked down.
 -- Spirit Shell(SS) se cumule avec Divine Aegis(DA) Bouclier protecteur si soins critiques
