@@ -188,13 +188,12 @@ local priestHolyPvP = function()
 	local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
 
 	-- set focus an enemy targeting you
-	if jps.UnitExists("mouseover") and not jps.UnitExists("focus") and canDPS("mouseover") then
-		if jps.UnitIsUnit("mouseovertarget","player") then
-			jps.Macro("/focus mouseover")
-			local name = GetUnitName("focus")
-			print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
-		end
+	if not jps.UnitExists("focus") and canDPS("mouseover") and jps.UnitIsUnit("mouseovertarget","player") then
+		jps.Macro("/focus mouseover")
+		local name = GetUnitName("focus")
+		print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
 	end
+	
 	if jps.UnitExists("focus") and not canDPS("focus") then
 		if not priest.get("KeepFocus") then jps.Macro("/clearfocus") end
 	end
@@ -433,25 +432,27 @@ local spellTable = {
 	{ "nested", jps.hp("player") < priest.get("HealthDPS")/100 and playerAggro ,
 		{
 			-- "Pierre de soins" 5512
-			{ {"macro","/use item:5512"}, select(1,IsUsableItem(5512))==1 and jps.itemCooldown(5512)==0 , "player" , "PIERRESOINS"},
+			{ {"macro","/use item:5512"}, select(1,IsUsableItem(5512))==1 and jps.itemCooldown(5512)==0 , "player" },
 			-- "Prière du désespoir" 19236
-			{ 19236, select(2,GetSpellBookItemInfo(priest.Spell["Desesperate"]))~=nil , "player" , "DESESPERATE" },
+			{ 19236, select(2,GetSpellBookItemInfo(priest.Spell["Desesperate"]))~=nil , "player" },
 			-- "Spectral Guise" -- "Semblance spectrale" 108968 -- fast out of combat drinking
-			{ 112833, jps.IsSpellKnown(112833) , "player" , "Aggro_Spectral_" },
+			{ 112833, jps.IsSpellKnown(112833) , "player" , "Aggro_Spectral" },
 			-- "Oubli" 586 -- Fantasme 108942 -- vous dissipez tous les effets affectant le déplacement sur vous-même et votre vitesse de déplacement ne peut être réduite pendant 5 s
-			-- "Oubli" 586 -- Glyphe d'ouble 55684 -- Votre technique Oubli réduit à présent tous les dégâts subis de 10%.
-			--{ 586, playerAggro and jps.IsSpellKnown(108942) , "player" , "Aggro_Oubli_" },
-			--{ 586, playerAggro and jps.glyphInfo(55684) , "player" , "Aggro_Oubli_" },
+			-- "Oubli" 586 -- Glyphe d'oubli 55684 -- Votre technique Oubli réduit à présent tous les dégâts subis de 10%.
+			--{ 586, playerAggro and jps.IsSpellKnown(108942) , "player" , "Aggro_Oubli" },
+			--{ 586, playerAggro and jps.glyphInfo(55684) , "player" , "Aggro_Oubli" },
 			-- "Divine Star" Holy 110744 Shadow 122121
-			{ 110744, jps.IsSpellKnown(110744) and playerIsInterrupt > 0 , "player" , "Interrupt_DivineStar_" },
+			{ 110744, jps.IsSpellKnown(110744) and playerIsInterrupt > 0 , "player" , "Interrupt_DivineStar" },
 			-- "Prière de guérison" 33076 -- TIMER POM -- UnitAffectingCombat("player") == 1
 			{ 33076, not jps.buff(33076) , "player" , "Aggro_Mending_Player" },
 			-- "Holy Word: Serenity" 88684 -- Chakra: Serenity 81208
 			{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) , "player" , "Aggro_Serenity_Player" },
 			-- "Soins rapides" 2061 "Holy Spark" 131567 "Etincelle sacrée" -- increases the healing done by your next Flash Heal, Greater Heal or Holy Word: Serenity by 50% for 10 sec.
 			{ 2061, not jps.Moving and jps.buff(131567) ,"player" , "Aggro_SoinsRapides_Holy Spark_Player" },
+			-- "Power Word: Shield" 17 
+			{ 17, jps.hp("player") < 0.50 and not jps.buff(17,"player") and not jps.debuff(6788,"player") , "player" , "Aggro_Shield_Player" },
 			-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
-			{ 139, not jps.buff(139,"player") , "player" ,"Aggro_Renew_Player_" },
+			{ 139, not jps.buff(139,"player") , "player" ,"Aggro_Renew_Player" },
 		},
 	},
 

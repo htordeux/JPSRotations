@@ -71,26 +71,13 @@ local playerControlled = jps.LoseControl("player",{"CC"})
 local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
 local EnemyCount = jps.RaidEnemyCount()
 
-local HealerEnemyTarget = nil
-for _,unit in ipairs(EnemyUnit) do 
-	local unitguid = UnitGUID(unit)
-	if jps.EnemyHealer[unitguid] then
-		HealerEnemyTarget = unit
-	break end
-end
-
-if type(HealerEnemyTarget) == "string" and not jps.UnitExists("focus") and canDPS(HealerEnemyTarget) then
-	jps.Macro("/focus "..HealerEnemyTarget)
-end
-
 -- set focus an enemy targeting you
-if jps.UnitExists("mouseover") and not jps.UnitExists("focus") and canDPS("mouseover") then
-	if jps.UnitIsUnit("mouseovertarget","player") then
-		jps.Macro("/focus mouseover")
-		local name = GetUnitName("focus")
-		print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
-	end
+if canDPS("mouseover") and not jps.UnitExists("focus") and jps.UnitIsUnit("mouseovertarget","player") then
+	jps.Macro("/focus mouseover")
+	local name = GetUnitName("focus")
+	print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
 end
+
 if jps.UnitExists("focus") and not canDPS("focus") then
 	if not priest.get("KeepFocus") then jps.Macro("/clearfocus") end
 end
@@ -244,6 +231,7 @@ local parseAggro = {
 	-- "Dispersion" 47585
 	{ 47585,  playerhealthpct < 0.40 , "player" , "Aggro_Dispersion_" },
 	-- "Oubli" 586 -- Fantasme 108942 -- vous dissipez tous les effets affectant le déplacement sur vous-même et votre vitesse de déplacement ne peut être réduite pendant 5 s
+	-- "Oubli" 586 -- Glyphe d'oubli 55684 -- Votre technique Oubli réduit à présent tous les dégâts subis de 10%.
 	{ 586, jps.IsSpellKnown(108942) and playerhealthpct < priest.get("HealthEmergency")/100 , "player" , "Aggro_Oubli" },
 	{ 586, jps.glyphInfo(55684) and playerhealthpct < priest.get("HealthEmergency")/100 , "player" , "Aggro_Oubli" },
 	-- "Semblance spectrale" 108968

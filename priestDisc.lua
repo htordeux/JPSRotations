@@ -47,7 +47,7 @@ local UnitGetTotalAbsorbs = UnitGetTotalAbsorbs
 -- ROTATION
 ----------------------------
 
-local priestDisc = function()
+local priestDiscPvP = function()
 
 ----------------------------
 -- TABLE GLOBAL MESSAGE FRAME
@@ -296,7 +296,7 @@ local InterruptTable = {
 			-- "Prière du désespoir" 19236
 			{ 19236, select(2,GetSpellBookItemInfo(priest.Spell["Desesperate"]))~=nil , "player" , "DESESPERATE" },
 			-- "Oubli" 586 -- Fantasme 108942 -- vous dissipez tous les effets affectant le déplacement sur vous-même et votre vitesse de déplacement ne peut être réduite pendant 5 s
-			-- "Oubli" 586 -- Glyphe d'ouble 55684 -- Votre technique Oubli réduit à présent tous les dégâts subis de 10%.
+			-- "Oubli" 586 -- Glyphe d'oubli 55684 -- Votre technique Oubli réduit à présent tous les dégâts subis de 10%.
 			{ 586, playerAggro and jps.IsSpellKnown(108942) , "player" , "Aggro_Oubli_" },
 			{ 586, playerAggro and jps.glyphInfo(55684) , "player" , "Aggro_Oubli_" },
 			-- "Divine Star" Holy 110744 Shadow 122121
@@ -431,7 +431,7 @@ local InterruptTable = {
 	return spell,target
 end
 
-jps.registerRotation("PRIEST","DISCIPLINE", priestDisc, "Disc Priest Custom", false , true)
+jps.registerRotation("PRIEST","DISCIPLINE", priestDiscPvP , "Disc Priest Custom", false , true)
 
 -- Divine Star belong to schools that are not used by any of the class's other spells. When these spells are instant cast, this means that it is not possible for that spell to be locked down.
 -- Spirit Shell(SS) se cumule avec Divine Aegis(DA) Bouclier protecteur si soins critiques

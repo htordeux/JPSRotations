@@ -2,20 +2,6 @@
 -- MARKER
 ------------------------------------
 
--- isArena, isRegistered = IsActiveBattlefieldArena()
--- isArena - 1 if player is in an Arena match; otherwise nil
--- IsInRaid() Boolean - returns true if the player is currently in a raid group, false otherwise
--- IsInGroup() Boolean - returns true if the player is in a some kind of group, otherwise false
-
--- leader = UnitIsRaidOfficer("unit") -- 1 if the unit is a raid assistant; otherwise nil or false if not in raid
--- leader = UnitIsGroupLeader("unit") -- true if the unit is a raid assistant; otherwise false (bool)
-local IsRaidLeader = jps.IsRaidLeader()
-local PlayerIsLeader = function()
-	if IsInRaid() and IsRaidLeader > 0 then return true end
-	if not IsInRaid() and not IsInGroup() then return true end
-	return false
-end
-
 --	  0 - Clear any raid target markers
 --    1 - Star
 --    2 - Circle
@@ -38,7 +24,7 @@ end)
 
 jps.TargetMarker = function(unit,num)
 	if unit == nil then return end
-	local playerAssistRaid = PlayerIsLeader()
+	local playerAssistRaid = jps.PlayerIsLeader()
 	if not playerAssistRaid then return end
 	if IsControlKeyDown() then SetRaidTarget("target",0) return end
 
