@@ -77,7 +77,7 @@ local L = MyLocalizationTable
 		{ 18499 , (not Rage) , "player" , "Berserker Rage" },
 		
 		-- "Pummel" 6552 "Volée de coups"
-		{ 6552, jps.shouldKick(rangedTarget) , rangedTarget , "Pummel" },
+		{ 6552, jps.ShouldKick(rangedTarget) , rangedTarget , "Pummel" },
 		-- "Dragon Roar" 118000 "Rugissement de dragon"
 		{ 118000, (CheckInteractDistance(rangedTarget, 3) == 1), rangedTarget , "Dragon Roar" },
 		-- "Shockwave" 46968 "Onde de choc"

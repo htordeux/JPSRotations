@@ -48,7 +48,7 @@ local playermana = UnitPower ("player",0)/UnitPowerMax ("player",0)
 -- HELPER
 ----------------------
 
-local Orbs = UnitPower("player",13)
+local Orbs = UnitPower("player",13) -- SPELL_POWER_SHADOW_ORBS 	13
 local NaaruGift = tostring(select(1,GetSpellInfo(59544))) -- NaaruGift 59544
 local Desesperate = tostring(select(1,GetSpellInfo(19236))) -- "Prière du désespoir" 19236
 local MindBlast = tostring(select(1,GetSpellInfo(8092))) -- "Mind Blast" 8092
@@ -62,7 +62,7 @@ local MindSear = tostring(select(1,GetSpellInfo(48045)))
 
 local playerAggro = jps.FriendAggro("player")
 local playerIsStun = jps.StunEvents(2) --- return true/false ONLY FOR PLAYER
-local playerControlled = jps.LoseControl("player",{"CC"})
+--local playerControlled = jps.LoseControl("player",{"CC"})
 
 ----------------------
 -- TARGET ENEMY
@@ -77,7 +77,7 @@ if canDPS("mouseover") and not jps.UnitExists("focus") and jps.UnitIsUnit("mouse
 	local name = GetUnitName("focus")
 	print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
 end
-
+-- CONFIG priest.get("KeepFocus") check if you want keep focus set manually
 if jps.UnitExists("focus") and not canDPS("focus") then
 	if not priest.get("KeepFocus") then jps.Macro("/clearfocus") end
 end
@@ -96,19 +96,20 @@ if canDPS(rangedTarget) then jps.Macro("/target "..rangedTarget) end
 local FearEnemyTarget = nil
 for _,unit in ipairs(EnemyUnit) do 
 	if priest.canFear(unit) and not jps.LoseControl(unit) then
-		if jps.IsCastingControl(unit) then
-			FearEnemyTarget = unit
-		elseif jps.shouldKickDelay(unit) then
-			FearEnemyTarget = unit
-		end
+		FearEnemyTarget = unit
 	break end
 end
 
 local SilenceEnemyTarget = nil
-for _,unit in ipairs(EnemyUnit) do 
-	if not jps.LoseControl(unit) and jps.shouldKickDelay(unit) then 
-		SilenceEnemyTarget = unit
-	break end
+-- if enemy is casting sure is not under control ^^
+for _,unit in ipairs(EnemyUnit) do
+	if jps.canCast(15487,unit) then
+		if jps.IsCastingControl(unit) then 
+			SilenceEnemyTarget = unit
+		elseif jps.ShouldKick(unit) then
+			SilenceEnemyTarget = unit
+		break end
+	end
 end
 
 local DeathEnemyTarget = nil
@@ -186,15 +187,26 @@ if jps.ChannelTimeLeft() > 0 then return nil end
 ------------------------ TABLES
 -------------------------------------------------------------
 
+local fnOrbs = function(unit)
+	if not jps.UseCDs then return false end
+	if jps.LoseControl(unit) then return false end
+	if Orbs == 0 then return false end
+	local unitguid = UnitGUID(unit)
+	if Orbs < 3 and jps.hp(unit) < 0.20 then return true end
+	if Orbs < 3 and jps.EnemyHealer[unitguid] then return true end
+	if Orbs == 1 and EnemyCaster(unit) == "cac" and jps.UnitIsUnit(unit.."target","player") then return true end
+	return false
+end
+
 local parseControl = {
 	-- "Psychic Scream" "Cri psychique" 8122 -- FARMING OR PVP -- NOT PVE -- debuff same ID 8122
 	{ 8122, type(FearEnemyTarget) == "string" , FearEnemyTarget , "FEAR_MultiUnit_" },
-	{ 8122, priest.canFear(rangedTarget) , rangedTarget , "Fear_"..rangedTarget },
+	{ 8122, priest.canFear(rangedTarget) , rangedTarget },
 	-- "Silence" 15487
 	{ 15487, type(SilenceEnemyTarget) == "string" , SilenceEnemyTarget , "Silence_MultiUnit_" },
-	{ 15487, EnemyCaster(rangedTarget) == "caster" , rangedTarget , "Silence_Caster_"..rangedTarget },
+	{ 15487, EnemyCaster(rangedTarget) == "caster" , rangedTarget },
 	-- "Psychic Horror" 64044 "Horreur psychique" -- 30 yd range
-	{ 64044, jps.canCast(64044,rangedTarget) and EnemyCaster(rangedTarget) == "cac" and Orbs < 2 , rangedTarget , "Psychic Horror_"..rangedTarget },
+	{ 64044, jps.canCast(64044,rangedTarget) and fnOrbs(rangedTarget)  , rangedTarget , "Psychic Horror_"..rangedTarget },
 	-- "Psyfiend" 108921 Démon psychique
 	{ 108921, playerAggro and priest.canFear(rangedTarget) , rangedTarget },
 	-- "Void Tendrils" 108920 -- debuff "Void Tendril's Grasp" 114404
@@ -207,7 +219,11 @@ local parseControlFocus = {
 	-- "Silence" 15487
 	{ 15487, EnemyCaster("focus") == "caster" , "focus" , "Silence_Caster_".."focus" },
 	-- "Psychic Horror" 64044 "Horreur psychique" -- 30 yd range
-	{ 64044, jps.canCast(64044,"focus") and EnemyCaster("focus") == "caster" and Orbs < 2 , "focus" , "Psychic Horror_".."focus" },
+	{ 64044, jps.canCast(64044,"focus") and fnOrbs("focus")  , "focus" , "Psychic Horror_".."focus" },
+	-- "Psyfiend" 108921 Démon psychique
+	{ 108921, playerAggro and priest.canFear("focus") ,"focus"},
+	-- "Void Tendrils" 108920 -- debuff "Void Tendril's Grasp" 114404
+	{ 108920, playerAggro and priest.canFear("focus") , "focus" },
 }
 
 local parseHeal = {
@@ -268,9 +284,8 @@ local spellTable = {
 	-- "Devouring Plague" 2944
 	{ 2944, Orbs == 3 , rangedTarget , "ORBS_3" },
 	-- "Devouring Plague" 2944 -- orbs < 3 if timetodie < few sec
-	{ 2944, Orbs > 0 and jps.hp(rangedTarget) < 0.20 and not jps.buff(124430) , rangedTarget , "ORBS_20%_NoBuff" },
-	{ 2944, Orbs > 1 and jps.hp(rangedTarget) < 0.20 , rangedTarget , "ORBS_2_" },
-	{ 2944, Orbs > 1 and jps.myDebuffDuration(34914,rangedTarget) > (6 + jps.GCD*3) and jps.myDebuffDuration(589,rangedTarget) > (6 + jps.GCD*3) , rangedTarget , "ORBS_2_Buff_" },
+	{ 2944, Orbs == 2 and jps.hp(rangedTarget) < 0.20 , rangedTarget , "ORBS_2_LowHealth_" },
+	{ 2944, Orbs == 2 and jps.myDebuffDuration(34914,rangedTarget) > (6 + jps.GCD*3) and jps.myDebuffDuration(589,rangedTarget) > (6 + jps.GCD*3) , rangedTarget , "ORBS_2_Buff_" },
 	
 	-- FOCUS CONTROL
 	{ "nested", canDPS("focus") and not jps.LoseControl("focus") , parseControlFocus },
@@ -290,7 +305,6 @@ local spellTable = {
 	-- "Mind Spike" 73510 -- "From Darkness, Comes Light" 109186 gives buff -- "Surge of Darkness" 87160 -- 10 sec
 	{ 73510, jps.buff(87160) and jps.buffDuration(87160) < (jps.GCD*4) , rangedTarget },
 	{ 73510, jps.buff(87160) and jps.myDebuff(34914,rangedTarget) , rangedTarget }, -- debuff "Vampiric Touch" 34914
-	{ 73510, jps.buff(87160) and jps.myDebuff(589,rangedTarget) , rangedTarget }, -- debuff "Shadow Word: Pain" 589
 	
 	-- "Vampiric Touch" 34914
 	{ 34914, not jps.Moving and playermana < 0.50 and type(VampEnemyTarget) == "string" , VampEnemyTarget , "Vamp_MultiUnit_Mana_" },

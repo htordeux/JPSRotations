@@ -176,11 +176,7 @@ local priestDiscPvP = function()
 	local FearEnemyTarget = nil
 	for _,unit in ipairs(EnemyUnit) do 
 		if priest.canFear(unit) and not jps.LoseControl(unit) then
-			if jps.IsCastingControl(unit) then
-				FearEnemyTarget = unit
-			elseif jps.shouldKickDelay(unit) then
-				FearEnemyTarget = unit
-			end
+			FearEnemyTarget = unit
 		break end
 	end
 

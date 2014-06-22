@@ -32,46 +32,25 @@ local divineshield = tostring(select(1,GetSpellInfo(642))) -- divine shield pala
 	local macroChastise = "/cast "..Chastise
 	local macroCancelaura = "/cancelaura "..ChakraSerenity.."\n".."/cancelaura "..ChakraSanctuary -- takes 1 GCD
 	local macroCancelauraChastise = macroCancelaura.."\n"..macroChastise -- takes 2 GCD
-
----------------------------
--- DEBUFF RBG
----------------------------
-
-local DispelTableRBG = {
-    8122,	-- "Psychic Scream"
-    5484,	-- "Howl of Terror"
-    3355,	-- Freezing Trap -- 1499, -- Freezing Trap ? Dispel type	n/a
-
-   	118,	-- Polymorph
-	61305,	-- Polymorph: Black Cat
-	28272,	-- Polymorph: Pig
-	61721,	-- Polymorph: Rabbit
-	61780,	-- Polymorph: Turkey
-	28271,	-- Polymorph: Turtle
 	
-    64044,	-- Psychic Horror
-    10326,	-- Turn Evil
-    44572,	-- Deep Freeze
-    55021,	-- Improved Counterspell -- 2139,	-- Counterspell? ? Dispel type	n/a
-    853, 	-- Hammer of Justice
-    82691,	-- Ring of Frost 113724, -- Ring of Frost ? Dispel type	n/a
-    20066,	-- Repentance
-    47476,	-- Strangulate
-    113792, -- Psychic Terror (Psyfiend)
-    5782,	-- "Fear"  
-	118699, -- "Fear"
-	130616, -- "Fear" (Glyph of Fear)
-	
-	104045, -- Sleep (Metamorphosis)
-	2944,	-- Devouring Plague ?
-	122,	-- frost nova
+local ClassEnemy = {
+	["WARRIOR"] = "cac",
+	["PALADIN"] = "caster",
+	["HUNTER"] = "cac",
+	["ROGUE"] = "cac",
+	["PRIEST"] = "caster",
+	["DEATHKNIGHT"] = "cac",
+	["SHAMAN"] = "caster",
+	["MAGE"] = "caster",
+	["WARLOCK"] = "caster",
+	["MONK"] = "caster",
+	["DRUID"] = "caster"
 }
 
-local DispelFriendlyTargetRBG = function(unit)
-	for _,debuff in ipairs(DispelTableRBG) do
-		if jps.debuff(debuff,unit) then return true end
-	end
-	return false
+local EnemyCaster = function(unit)
+	if not jps.UnitExists(unit) then return false end
+	local _, classTarget, classIDTarget = UnitClass(unit)
+	return ClassEnemy[classTarget]
 end
 
 ----------------------------
@@ -116,7 +95,7 @@ local priestHolyPvP = function()
 	end
 
 	local MendingTarget = nil
-	local MendingTargetHealth = 1
+	local MendingTargetHealth = 100
 	for _,unit in ipairs(FriendUnit) do
 		if priest.unitForMending(unit) then
 			local unitHP = jps.hp(unit)
@@ -128,7 +107,7 @@ local priestHolyPvP = function()
 	end
 	
 	local BindingHealTarget = nil
-	local BindingHealTargetHealth = 1
+	local BindingHealTargetHealth = 100
 	for _,unit in ipairs(FriendUnit) do
 		if priest.unitForBinding(unit) then
 			local unitHP = jps.hp(unit)
@@ -141,32 +120,34 @@ local priestHolyPvP = function()
 	
 	-- {"Magic", "Poison", "Disease", "Curse"}
 	--local DispelTarget = jps.FindMeDispelTarget( {"Magic"} )
-
 	local DispelTargetRole = nil
 	for _,unit in ipairs(FriendUnit) do 
-		local role = UnitGroupRolesAssigned(unit)
-		if role == "HEALER" and jps.canDispel(unit,{"Magic"}) then
+		if jps.RoleInRaid(unit) == "HEALER" and jps.canDispel(unit,{"Magic"}) then
 			DispelTargetRole = unit
-		end
+		break end
 	end
 
 	local DispelFriendlyTarget = nil
-	local DispelFriendlyTargetHealth = 1
-	for _,unit in ipairs(FriendUnit) do 
-		if jps.DispelFriendly(unit) then
-			local unitHP = jps.hp(unit)
+	local DispelFriendlyTargetHealth = 100
+	for _,unit in ipairs(FriendUnit) do
+		local unitHP = jps.hp(unit)
+		if jps.DispelFriendlyRBG(unit) then
 			if unitHP < DispelFriendlyTargetHealth then
 				DispelFriendlyTarget = unit
 				DispelFriendlyTargetHealth = unitHP
 			end
 		end
 	end
-	
-	local DispelFriendlyRBG = nil
-	for _,unit in ipairs(FriendUnit) do
-		if DispelFriendlyTargetRBG(unit) and unit ~= "player" then
-			DispelFriendlyRBG = unit
-		break end
+	if DispelFriendlyTarget == nil then
+		for _,unit in ipairs(FriendUnit) do
+			local unitHP = jps.hp(unit)
+			if jps.DispelFriendly(unit,1) then
+				if unitHP < DispelFriendlyTargetHealth then
+					DispelFriendlyTarget = unit
+					DispelFriendlyTargetHealth = unitHP
+				end
+			end
+		end	
 	end
 
 	local LeapFriend = nil
@@ -193,7 +174,7 @@ local priestHolyPvP = function()
 		local name = GetUnitName("focus")
 		print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
 	end
-	
+	-- CONFIG priest.get("KeepFocus") check if you want keep focus set manually
 	if jps.UnitExists("focus") and not canDPS("focus") then
 		if not priest.get("KeepFocus") then jps.Macro("/clearfocus") end
 	end
@@ -213,11 +194,7 @@ local priestHolyPvP = function()
 	local FearEnemyTarget = nil
 	for _,unit in ipairs(EnemyUnit) do 
 		if priest.canFear(unit) and not jps.LoseControl(unit) then
-			if jps.IsCastingControl(unit) then
-				FearEnemyTarget = unit
-			elseif jps.shouldKickDelay(unit) then
-				FearEnemyTarget = unit
-			end
+			FearEnemyTarget = unit
 		break end
 	end
 
@@ -291,20 +268,19 @@ local InterruptTable = {
 		-- "Psychic Scream" "Cri psychique" 8122 -- FARMING OR PVP -- NOT PVE -- debuff same ID 8122
 		{ 8122, priest.canFear("focus") , "focus" , "Fear_".."focus" },
 		-- "Psyfiend" 108921 Démon psychique
-		{ 108921, priest.canFear("focus") , "focus" },
+		{ 108921, EnemyCaster("focus") == "cac" and priest.canFear("focus") , "focus" },
 		-- "Void Tendrils" 108920 -- debuff "Void Tendril's Grasp" 114404
-		{ 108920, priest.canFear("focus") , "focus" },
+		{ 108920, EnemyCaster("focus") == "cac" and priest.canFear("focus") , "focus" },
 	}
 
 	
 	parseDispel = {
+		-- "Dispel" "Purifier" 527
+		{ 527, type(DispelTargetRole) == "string" , DispelTargetRole , "|cff1eff00DispelTargetRole_MultiUnit_" },
+		{ 527, type(DispelFriendlyTarget) == "string" , DispelFriendlyTarget , "|cff1eff00DispelFriendlyTarget_MultiUnit_" },
 		-- "Leap of Faith" 73325 -- "Saut de foi"
 		{ 73325 , type(LeapFriendFlag) == "string" , LeapFriendFlag , "|cff1eff00Leap_MultiUnit_" },
 		{ 73325 , type(LeapFriend) == "string" , LeapFriend , "|cff1eff00Leap_MultiUnit_" },
-		-- "Dispel" "Purifier" 527
-		{ 527, type(DispelTargetRole) == "string" , DispelTargetRole , "|cff1eff00DispelTargetRole_MultiUnit_" },
-		{ 527, type(DispelFriendlyRBG) == "string" , DispelFriendlyRBG , "|cff1eff00DispelTargetRBG_MultiUnit_" },
-		{ 527, type(DispelFriendlyTarget) == "string" , DispelFriendlyTarget , "|cff1eff00DispelFriendlyTarget_MultiUnit_" },
 	}
 	
 	parseDamage = {
