@@ -19,7 +19,7 @@ priestConfig:addCheckBox("Cascade", "use Cascade", "use Cascade in Combat", true
 priestConfig:addCheckBox("MindSear", "use MindSear", "use MindSear in Combat", true)
 
 priestConfig:addText("CheckBox for FOCUS")	
-priestConfig:addCheckBox("KeepFocus", "use Focus", "keep Focus set manually", true)
+priestConfig:addCheckBox("KeepFocus", "use Focus", "keep Focus set manually", false)
 
 
 function priest.get(name)
