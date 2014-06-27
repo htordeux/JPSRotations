@@ -81,6 +81,15 @@ elseif canDPS("mouseover") and not jps.UnitExists("focus") then
 		jps.Macro("/focus mouseover")
 		print("Enemy HEALER|cff1eff00 "..name.." |cffffffffClass|cff1eff00 "..class.." |cffffffffset as FOCUS")
 	end
+elseif canDPS("mouseover") and not jps.UnitExists("focus") then
+	local unitGuidMouseover = UnitGUID("mouseover")
+	if jps.EnemyDamager[unitGuidMouseover] then
+		local friendname = jps.EnemyDamager[unitGuidMouseover]["friendname"]
+		if jps.RoleInRaid(friendname) == "HEALER" then
+			jps.Macro("/focus mouseover")
+			print("Enemy DAMAGER|cff1eff00 ".." Attack Healer "..friendname.." |cffffffffset as FOCUS")
+		end
+	end
 end
 
 -- CONFIG priest.get("KeepFocus") check if you want keep focus set manually
@@ -291,10 +300,12 @@ local spellTable = {
 		},
 	},
 	
+	-- PLAYER AGGRO
+	{ "nested", playerAggro , parseAggro },
+	
 	-- FOCUS CONTROL
 	{ "nested", canDPS("focus") and not jps.LoseControl("focus") , parseControlFocus },
 	{ "nested", not jps.LoseControl(rangedTarget) , parseControl },
-	{ "nested", playerAggro , parseAggro },
 
 	-- TRINKETS -- jps.useTrinket(0) est "Trinket0Slot" est slotId  13 -- "jps.useTrinket(1) est "Trinket1Slot" est slotId  14
 	{ jps.useTrinket(1), jps.useTrinketBool(1) and playerIsStun , "player" },

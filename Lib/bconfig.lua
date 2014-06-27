@@ -156,7 +156,22 @@ MessageInfoFrame_OnUpdate:SetScript("OnUpdate", function(self, elapsed)
 	end
 end)
 
+------------------------------------
+-- AFK
+------------------------------------
 
+--jps.listener.registerEvent("PLAYER_FLAGS_CHANGED", function(unit)
+--	if unit == "player" and UnitIsAFK("player") then
+--		jps.createTimer("AFK",10)
+--	end
+--end)
+
+local playerIsAFK = function(self)
+	if UnitIsAFK("player") == 1 then jps.createTimer("AFK",10) end
+	if jps.checkTimer("AFK") > 0  then JumpOrAscendStart() end -- JumpOrAscendStop()
+end
+
+jps.registerOnUpdate(jps.cachedValue(playerIsAFK,5))
 
 
 

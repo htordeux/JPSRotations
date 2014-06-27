@@ -21,6 +21,9 @@ priestConfig:addCheckBox("MindSear", "use MindSear", "use MindSear in Combat", t
 priestConfig:addText("CheckBox for FOCUS")	
 priestConfig:addCheckBox("KeepFocus", "use Focus", "keep Focus set manually", false)
 
+--priestConfig:addNumericBox("numericTest", "NumericBox Text: ", "NumericBox Tooltip Text", 42) -- priest.get("numericTest")
+--priestConfig:addDropDown("dropdownNumber", "Drop Down Text: ", "DropDown Tooltip", {"Un", "Deux", "Trois", "Quatre", "Cinq" }, 2) -- priest.get("dropdownNumber") return number
+
 
 function priest.get(name)
     return priestConfig:get(name)
