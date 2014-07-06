@@ -48,29 +48,6 @@ jps.TargetMarker = function(unit,num)
 end
 
 ------------------------------------
--- MOUSEOVER HEALER
-------------------------------------
-
---jps.listener.registerEvent("UPDATE_MOUSEOVER_UNIT", function()
---	if jps.getConfigVal("set healer as focus") == 1 then
---		if jps.RoleInRaid("mouseover") == "HEALER" then
---			jps.TargetMarker("mouseover")
---		end
---	end
---end)
-
---jps.listener.registerEvent("UPDATE_MOUSEOVER_UNIT", function()
---	if jps.getConfigVal("set healer as focus") == 1 then
---		local unitGuidMouseover = UnitGUID("mouseover")
---		if jps.EnemyHealer[unitGuidMouseover] and canDPS("mouseover") then
---			local class = jps.EnemyHealer[unitGuidMouseover][1]
---			local name = jps.EnemyHealer[unitGuidMouseover][2]
---			print("Enemy HEALER|cff1eff00 "..name.." |cffffffffClass|cff1eff00 "..class.." |cffffffffcan be DPS")
---		end
---	end
---end)
-
-------------------------------------
 -- BUTTON for Mconfig
 ------------------------------------
 
@@ -160,15 +137,16 @@ end)
 -- AFK
 ------------------------------------
 
---jps.listener.registerEvent("PLAYER_FLAGS_CHANGED", function(unit)
---	if unit == "player" and UnitIsAFK("player") then
---		jps.createTimer("AFK",10)
---	end
---end)
-
+jps.listener.registerEvent("PLAYER_FLAGS_CHANGED", function(unit)
+	if unit == "player" then
+		jps.createTimer("AFK",10)
+	end
+end)
+-- JumpOrAscendStop() -- MoveBackwardStart() -- MoveBackwardStop()
 local playerIsAFK = function(self)
-	if UnitIsAFK("player") == 1 then jps.createTimer("AFK",10) end
-	if jps.checkTimer("AFK") > 0  then JumpOrAscendStart() end -- JumpOrAscendStop()
+	if jps.checkTimer("AFK") > 0 and UnitIsAFK("player") == 1 then
+		JumpOrAscendStart()
+	end
 end
 
 jps.registerOnUpdate(jps.cachedValue(playerIsAFK,5))
