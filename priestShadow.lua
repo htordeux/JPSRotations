@@ -31,7 +31,6 @@ end
 
 local iceblock = tostring(select(1,GetSpellInfo(45438))) -- ice block mage
 local divineshield = tostring(select(1,GetSpellInfo(642))) -- divine shield paladin
-local orbofpower = tostring(select(1,GetSpellInfo(112055))) -- Orb of Power RBG Temple of Kotmogu
 
 ----------------------------
 -- ROTATION
@@ -40,7 +39,6 @@ local orbofpower = tostring(select(1,GetSpellInfo(112055))) -- Orb of Power RBG 
 jps.registerRotation("PRIEST","SHADOW",function()
 
 local CountInRange, AvgHealthLoss, FriendUnit = jps.CountInRaidStatus(1)
-local playerIsInterrupt = jps.checkTimer("PlayerInterrupt")
 local playerhealth =  jps.hp("player","abs")
 local playerhealthpct = jps.hp("player")
 local playermana = UnitPower ("player",0)/UnitPowerMax ("player",0)
@@ -62,8 +60,8 @@ local MindSear = tostring(select(1,GetSpellInfo(48045)))
 ---------------------
 
 local playerAggro = jps.FriendAggro("player")
-local playerIsStun = jps.StunEvents(2) --- return true/false ONLY FOR PLAYER
---local playerControlled = jps.LoseControl("player",{"CC"})
+local playerIsStun = jps.StunEvents(2) --- return true/false ONLY FOR PLAYER > 2 sec
+local playerIsInterrupt = jps.InterruptEvents() -- return true/false ONLY FOR PLAYER
 
 ----------------------
 -- TARGET ENEMY
@@ -76,20 +74,12 @@ local EnemyCount = jps.RaidEnemyCount()
 if canDPS("mouseover") and not jps.UnitExists("focus") and jps.UnitIsUnit("mouseovertarget","player") then
 	jps.Macro("/focus mouseover")
 	local name = GetUnitName("focus")
-	print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffAttack Player set as FOCUS")
--- set focus an enemy healer or an enemy damager attacking a friend healer
-elseif canDPS("mouseover") and not jps.UnitExists("focus") then
-	if jps.EnemyHealer("mouseover") then
-		jps.Macro("/focus mouseover")
-		local name = GetUnitName("focus")
-		print("Enemy HEALER|cff1eff00 "..name.." |cffffffffset as FOCUS")
-	elseif jps.EnemyDamager("mouseover") then
-		if jps.RoleInRaid("mouseovertarget") == "HEALER" then
-			local name = GetUnitName("focus")
-			jps.Macro("/focus mouseover")
-			print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffAttack Healer set as FOCUS")
-		end
-	end
+	print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
+-- set focus an enemy healer
+elseif canDPS("mouseover") and not jps.UnitExists("focus") and jps.EnemyHealer("mouseover") then
+	jps.Macro("/focus mouseover")
+	local name = GetUnitName("focus")
+	print("Enemy HEALER|cff1eff00 "..name.." |cffffffffset as FOCUS")
 end
 
 -- CONFIG priest.get("KeepFocus") check if you want keep focus set manually
@@ -168,7 +158,7 @@ end
 local LeapFriend = nil
 local LeapFriendFlag = nil 
 for _,unit in ipairs(FriendUnit) do
-	if priest.unitForLeap(unit) and jps.FriendAggro(unit) then
+	if priest.unitForLeap(unit) and jps.FriendAggro(unit) and jps.LoseControl(unit) then
 		if jps.buff(23335,unit) or jps.buff(23333,unit) then -- 23335/alliance-flag -- 23333/horde-flag 
 			LeapFriendFlag = unit
 		end
@@ -268,7 +258,6 @@ local parseHeal = {
 
 local parseAggro = {
 	-- "Semblance spectrale" 108968
-	{ 112833, not jps.buff(orbofpower,"player") and jps.IsSpellKnown(112833) , "player" , "Aggro_Spectral_" },
 	{ 112833, jps.Interrupts and jps.IsSpellKnown(112833) , "player" , "Aggro_Spectral_" },
 	-- "Dispersion" 47585
 	{ 47585,  playerhealthpct < 0.40 , "player" , "Aggro_Dispersion_" },
@@ -283,7 +272,7 @@ local parseAggro = {
 -----------------------------
 
 local spellTable = {
-	-- "Shadowform" 15473
+	-- "Shadowform" 15473 -- UnitAffectingCombat("player") == 1
 	{ 15473, not jps.buff(15473) , "player" },
 	-- "Spectral Guise" gives buff 119032
 	{"nested", not jps.Combat and not jps.buff(119032,"player") , 
@@ -304,7 +293,7 @@ local spellTable = {
 	-- FOCUS CONTROL
 	{ 15487, type(SilenceEnemyTarget) == "string" , SilenceEnemyTarget , "Silence_MultiUnit_" },
 	{ "nested", canDPS("focus") and not jps.LoseControl("focus") , parseControlFocus },
-	{ "nested", not jps.LoseControl(rangedTarget) , parseControl },
+	{ "nested", canDPS(rangedTarget) and not jps.LoseControl(rangedTarget) , parseControl },
 
 	-- PLAYER AGGRO
 	{ "nested", playerAggro , parseAggro },
@@ -312,7 +301,7 @@ local spellTable = {
 	-- TRINKETS -- jps.useTrinket(0) est "Trinket0Slot" est slotId  13 -- "jps.useTrinket(1) est "Trinket1Slot" est slotId  14
 	{ jps.useTrinket(1), jps.useTrinketBool(1) and playerIsStun , "player" },
 	-- "Divine Star" Holy 110744 Shadow 122121
-	{ 122121, jps.IsSpellKnown(110744) and playerIsInterrupt > 0 , "player" , "Interrupt_DivineStar_" },
+	{ 122121, jps.IsSpellKnown(110744) and playerIsInterrupt , "player" , "Interrupt_DivineStar_" },
 
 	-- "Devouring Plague" 2944
 	{ 2944, Orbs == 3 , rangedTarget , "ORBS_3_" },
@@ -331,6 +320,7 @@ local spellTable = {
 	{ 32379, type(DeathEnemyTarget) == "string" , DeathEnemyTarget , "Death_MultiUnit_" },
 	
 	-- "Mind Spike" 73510 -- "From Darkness, Comes Light" 109186 gives buff -- "Surge of Darkness" 87160 -- 10 sec
+	{ 73510, jps.buffStacks(87160,"player") == 2 , rangedTarget },
 	{ 73510, jps.buff(87160) and jps.buffDuration(87160) < (jps.GCD*4) , rangedTarget },
 	{ 73510, jps.buff(87160) and jps.myDebuff(34914,rangedTarget) , rangedTarget }, -- debuff "Vampiric Touch" 34914
 
@@ -348,7 +338,7 @@ local spellTable = {
 	{ 34914, not jps.Moving and type(VampEnemyTarget) == "string" , VampEnemyTarget , "Vamp_MultiUnit_" },
 	-- "Shadow Word: Pain" 589
 	{ 589, type(PainEnemyTarget) == "string" , PainEnemyTarget , "Pain_MultiUnit_" },
-	--{ 589, fnPainEnemyTarget("mouseover") , "mouseover" , "Pain_MultiUnit_MOUSEOVER_" },	
+	{ 589, fnPainEnemyTarget("mouseover") , "mouseover" , "Pain_MultiUnit_MOUSEOVER_" },	
 
 	-- "Vampiric Touch" 34914 Keep VT up with duration
 	{ 34914, not jps.Moving and UnitHealth(rangedTarget) > 120000 and jps.myDebuff(34914,rangedTarget) and jps.myDebuffDuration(34914,rangedTarget) < (jps.GCD*2) and not jps.myLastCast(34914) , rangedTarget , "VT_Keep_" },
@@ -378,6 +368,8 @@ local spellTable = {
 	{ 6346, not jps.buff(6346,"player") , "player" },
 	-- "Inner Fire" 588 Keep Inner Fire up 
 	{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player"), "player" }, -- "Volonté intérieure" 73413
+	-- "Fortitude" 21562 Keep Fortitude up 
+	{ 21562, jps.buffMissing(21562) , "player" },
 	-- "Mind Flay" 15407
 	{ 15407, true , rangedTarget },
 }
