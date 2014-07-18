@@ -251,7 +251,7 @@ local parseHeal = {
 	-- "Power Word: Shield" 17	
 	{ 17, playerAggro and not jps.debuff(6788,"player") and not jps.buff(17,"player") , "player" },
 	-- "Renew" 139 Self heal when critical 
-	{ 139, not jps.buff(139,"player"), "player" },
+	{ 139, not jps.buff(139,"player") , "player" },
 	-- "Prayer of Mending" "Prière de guérison" 33076 
 	{ 33076, playerAggro and not jps.buff(33076,"player") , "player" },
 }
@@ -290,6 +290,11 @@ local spellTable = {
 		},
 	},
 	
+	-- TRINKETS -- jps.useTrinket(0) est "Trinket0Slot" est slotId  13 -- "jps.useTrinket(1) est "Trinket1Slot" est slotId  14
+	{ jps.useTrinket(1), jps.useTrinketBool(1) and playerIsStun , "player" },
+	-- "Divine Star" Holy 110744 Shadow 122121
+	{ 122121, jps.IsSpellKnown(110744) and playerIsInterrupt , "player" , "Interrupt_DivineStar_" },
+	
 	-- FOCUS CONTROL
 	{ 15487, type(SilenceEnemyTarget) == "string" , SilenceEnemyTarget , "Silence_MultiUnit_" },
 	{ "nested", canDPS("focus") and not jps.LoseControl("focus") , parseControlFocus },
@@ -297,11 +302,6 @@ local spellTable = {
 
 	-- PLAYER AGGRO
 	{ "nested", playerAggro , parseAggro },
-
-	-- TRINKETS -- jps.useTrinket(0) est "Trinket0Slot" est slotId  13 -- "jps.useTrinket(1) est "Trinket1Slot" est slotId  14
-	{ jps.useTrinket(1), jps.useTrinketBool(1) and playerIsStun , "player" },
-	-- "Divine Star" Holy 110744 Shadow 122121
-	{ 122121, jps.IsSpellKnown(110744) and playerIsInterrupt , "player" , "Interrupt_DivineStar_" },
 
 	-- "Devouring Plague" 2944
 	{ 2944, Orbs == 3 , rangedTarget , "ORBS_3_" },
@@ -326,6 +326,7 @@ local spellTable = {
 
 	-- "Vampiric Embrace" 15286
 	{ 15286, AvgHealthLoss < priest.get("HealthDPS")/100 , "player" },
+	-- SELF HEAL
 	{ "nested", playerhealthpct < priest.get("HealthEmergency")/100 , parseHeal },
 
 	-- "Mass Dispel" 32375 "Dissipation de masse"
