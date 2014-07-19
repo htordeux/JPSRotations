@@ -29,13 +29,24 @@ local L = MyLocalizationTable
 	local target = nil
 	
 	local rangedTarget = warrior.rangedTarget()
-	local Class, _ = UnitClass(rangedTarget)
-	local ClassCac = false
-	local ClassCaCTable = {L["Warrior"],L["Paladin"],L["Death Knight"],L["Rogue"]}
-	for i,unitClass in pairs(ClassCaCTable) do
-		if Class == unitClass then 
-			ClassCac = true 
-		break end
+	local ClassEnemy = {
+		["WARRIOR"] = "cac",
+		["PALADIN"] = "caster",
+		["HUNTER"] = "cac",
+		["ROGUE"] = "cac",
+		["PRIEST"] = "caster",
+		["DEATHKNIGHT"] = "cac",
+		["SHAMAN"] = "caster",
+		["MAGE"] = "caster",
+		["WARLOCK"] = "caster",
+		["MONK"] = "caster",
+		["DRUID"] = "caster"
+	}
+	
+	local EnemyCaster = function(unit)
+		if not jps.UnitExists(unit) then return false end
+		local _, classTarget, classIDTarget = UnitClass(unit)
+		return ClassEnemy[classTarget]
 	end
 	
 	local playerAggro = jps.FriendAggro("player")
@@ -90,7 +101,7 @@ local L = MyLocalizationTable
 		-- "Stoneform" 20594 "Forme de pierre"
 		{ 20594, playerAggro , "player" , "Stoneform" },
 		-- "Disarm" 676 "Désarmement"
-		{ 676, ClassCac , rangedTarget , "Disarm"  },
+		{ 676, EnemyCaster(rangedTarget) == "cac", rangedTarget , "Disarm"  },
 		-- "Lifeblood" 74497 same ID spell & buff -- Herbalist.
 		{ 74497, UnitAffectingCombat("player")==1 , "player" , "Lifeblood" },
 		

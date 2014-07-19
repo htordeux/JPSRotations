@@ -113,10 +113,11 @@ jps.MessageInfo = {}
 jps.listener.registerEvent("ACTIVE_TALENT_GROUP_CHANGED", function() jps.MessageInfo = {} end)
 local UpdateMessageInfo = function ()
 	for _,info in ipairs(jps.MessageInfo) do
-		if info[1] then
+		if info[1] == true then
 			MessageInfoFrame:Show()
 			MessageInfoFrame.text:SetText(info[2])
 		break end
+		MessageInfoFrame:Hide()
 	end
 	if not jps.Combat then MessageInfoFrame:Hide() end
 end
