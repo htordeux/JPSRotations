@@ -108,7 +108,7 @@ local priestHolyPvP = function()
 	local BindingHealTarget = nil
 	local BindingHealTargetHealth = 100
 	for _,unit in ipairs(FriendUnit) do
-		if priest.unitForBinding(unit) then -- take priest.AvgAmountFlashHeal
+		if priest.unitForBinding(unit) then -- priest.AvgAmountFlashHeal
 			local unitHP = jps.hp(unit)
 			if unitHP < BindingHealTargetHealth then
 				BindingHealTarget = unit
@@ -159,22 +159,31 @@ local priestHolyPvP = function()
 		end
 	end
 	
-	local RenewFriendlyTarget = nil
-	local RenewFriendlyTargetHealth = 100
+	local RenewTarget = nil
+	local RenewTargetHealth = 100
 	for _,unit in ipairs(FriendUnit) do
 		local unitHP = jps.hp(unit)
 		if not jps.buff(139,unit) and jps.FriendAggro(unit) then
-			if unitHP < RenewFriendlyTargetHealth then
-				RenewFriendlyTarget = unit
-				RenewFriendlyTargetHealth = unitHP
+			if unitHP < RenewTargetHealth then
+				RenewTarget = unit
+				RenewTargetHealth = unitHP
 			end
 		end
 	end
 	
-	local HealFriendlyTarget = nil
+	local HealTarget = nil
 	for _,unit in ipairs(FriendUnit) do
 		if jps.buff(139,unit) and jps.buffDuration(139,unit) < 6 and jps.buffId(81208) then
-			HealFriendlyTarget = unit
+			HealTarget = unit
+		break end
+	end
+	
+	-- "Holy Spark" 131567 "Etincelle sacrée"
+	-- On Initial Target increases the healing done by your next Flash Heal, Greater Heal or Holy Word: Serenity by 50% for 10 sec.
+	local HolySparkTarget = nil
+	for _,unit in ipairs(FriendUnit) do
+		if jps.buff(131567,unit) then
+			HolySparkTarget = unit
 		break end
 	end
 
@@ -319,7 +328,7 @@ local spellTable = {
 	{ "nested", jps.buff(27827) , 
 		{
 			-- "Divine Hymn" 64843
-			{ 64843, AvgHealthLoss < priest.get("HealthDPS")/100  , "player" },
+			{ 64843, AvgHealthLoss < priest.get("HealthRaid")/100 , "player" },
 			-- "Circle of Healing" 34861
 			{ 34861, true , LowestImportantUnit },
 			-- "Soins supérieurs" 2060
@@ -329,7 +338,7 @@ local spellTable = {
 			-- "Soins rapides" 2061
 			{ 2061, LowestImportantUnitHpct < priest.get("HealthDPS")/100 , LowestImportantUnit },
 			-- "Renew" 139
-			{ 139, type(RenewFriendlyTarget) == "string" , RenewFriendlyTarget },
+			{ 139, not jps.buff(139,LowestImportantUnit) , LowestImportantUnit },
 		},
 	},
 	
@@ -349,9 +358,10 @@ local spellTable = {
 	-- TRINKETS -- jps.useTrinket(0) est "Trinket0Slot" est slotId  13 -- "jps.useTrinket(1) est "Trinket1Slot" est slotId  14
 	{ jps.useTrinket(1), playerIsStun and jps.useTrinketBool(1) , "player" },
 	-- "Guardian Spirit"
+	{ 47788, playerIsStun and not jps.useTrinketBool(1) and jps.hp("player") < 0.40 , "player" },
 	{ 47788, playerIsStun and not jps.useTrinketBool(1) and LowestImportantUnitHpct < 0.40 , LowestImportantUnit },
 	-- "Divine Star" Holy 110744 Shadow 122121
-	{ 110744, jps.IsSpellKnown(110744) and playerIsInterrupt and LowestImportantUnitHpct < priest.get("HealthDPS")/100 , "player" , "Interrupt_DivineStar" },
+	{ 110744, jps.IsSpellKnown(110744) and playerIsInterrupt and LowestImportantUnitHpct < priest.get("HealthRaid")/100 , "player" , "Interrupt_DivineStar" },
 	-- "Spectral Guise" -- "Semblance spectrale" 108968 -- fast out of combat drinking
 	{ 112833, jps.Interrupts and playerAggro and jps.IsSpellKnown(112833) , "player" , "Aggro_Spectral" },
 
@@ -373,20 +383,20 @@ local spellTable = {
 	-- "Soins rapides" 2061 "From Darkness, Comes Light" 109186 gives buff -- "Vague de Lumière" 114255 "Surge of Light"
 	{ 2061, jps.buff(114255) and (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) , LowestImportantUnit , "SoinsRapides_Light_"..LowestImportantUnit },
 	{ 2061, jps.buff(114255) and (jps.buffDuration(114255) < 4) , LowestImportantUnit , "SoinsRapides_Light_"..LowestImportantUnit },
-	-- "Void Shift" 108968 -- "Prière du désespoir" 19236
+	-- "Void Shift" 108968
 	{ 108968, not playerAggro and UnitIsUnit(LowestImportantUnit,"player")~=1 and LowestImportantUnitHpct < 0.40 and jps.hp("player") > 0.85 , LowestImportantUnit , "Emergency_VoidShift_"..LowestImportantUnit },
 
-	-- "Prière de guérison" 33076 -- TIMER POM -- UnitAffectingCombat("player") == 1
+	-- "Prière de guérison" 33076 -- UnitAffectingCombat("player") == 1
 	{ 33076, not jps.buffTracker(33076) and jps.FriendAggro(LowestImportantUnit) , LowestImportantUnit , "Tracker_Mending_"..LowestImportantUnit },
-	-- "Holy Spark" 131567 "Etincelle sacrée" -- On Initial Target increases the healing done by your next Flash Heal, Greater Heal or Holy Word: Serenity by 50% for 10 sec.
-	{ "nested", jps.buff(131567,LowestImportantUnit) and LowestImportantUnitHpct < priest.get("HealthEmergency")/100 , 
+	-- "Holy Spark" 131567 "Etincelle sacrée"
+	{ "nested", type(HolySparkTarget) == "string" and jps.hp(HolySparkTarget) < priest.get("HealthEmergency")/100 , 
 		{
 			-- "Holy Word: Serenity" 88684 -- Chakra: Serenity 81208
-			{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) , LowestImportantUnit },
+			{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) , HolySparkTarget },
 			-- "Soins supérieurs" 2060
-			{ 2060,  not jps.Moving and jps.buffStacks(63735,"player") == 2 , LowestImportantUnit },
+			{ 2060, not jps.Moving and jps.buffStacks(63735,"player") == 2 , HolySparkTarget },
 			-- "Soins rapides" 2061
-			{ 2061, not jps.Moving and jps.buffStacks(63735,"player") < 2 , LowestImportantUnit },
+			{ 2061, not jps.Moving and jps.buffStacks(63735,"player") < 2 , HolySparkTarget },
 		},
 	},
 	
@@ -400,7 +410,7 @@ local spellTable = {
 			{ {"macro","/use item:5512"}, select(1,IsUsableItem(5512))==1 and jps.itemCooldown(5512)==0 , "player" },
 			-- "Prière du désespoir" 19236
 			{ 19236, select(2,GetSpellBookItemInfo(priest.Spell["Desesperate"]))~=nil , "player" },
-			-- "Prière de guérison" 33076 -- TIMER POM -- UnitAffectingCombat("player") == 1
+			-- "Prière de guérison" 33076
 			{ 33076, not jps.buff(33076) , "player" , "Aggro_Mending_Player" },
 			-- "Oubli" 586 -- Fantasme 108942 -- vous dissipez tous les effets affectant le déplacement sur vous-même et votre vitesse de déplacement ne peut être réduite pendant 5 s
 			-- "Oubli" 586 -- Glyphe d'oubli 55684 -- Votre technique Oubli réduit à présent tous les dégâts subis de 10%.
@@ -440,7 +450,7 @@ local spellTable = {
 	{ 10060, AvgHealthLoss < priest.get("HealthRaid")/100 , "player" , "POWERINFUSION_" },
 
 	-- GROUP HEAL
-	{ "nested", CountInRange > 2 and AvgHealthLoss < priest.get("HealthDPS")/100 , 
+	{ "nested", CountInRange > 2 and AvgHealthLoss < priest.get("HealthRaid")/100 , 
 		{
 			-- "Lightwell" 126135
 			--{ 126135, LowestImportantUnitHpct < 0.50 , "player" ,"Lightwell" },
@@ -462,7 +472,7 @@ local spellTable = {
 		},
 	},
 
-	{ "nested", LowestImportantUnitHpct < priest.get("HealthDPS")/100  ,
+	{ "nested", LowestImportantUnitHpct < priest.get("HealthDPS")/100 ,
 		{
 			-- "Holy Word: Serenity" 88684 -- Chakra: Serenity 81208
 			{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) , LowestImportantUnit , "Emergency_Serenity_"..LowestImportantUnit },
@@ -498,7 +508,7 @@ local spellTable = {
 	{ "nested", jps.FaceTarget and canDPS(rangedTarget) and LowestImportantUnitHpct > priest.get("HealthDPS")/100 , parseDamage },
 
 	-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
-	{ 139, type(RenewFriendlyTarget) == "string" , RenewFriendlyTarget },
+	{ 139, type(RenewTarget) == "string" , RenewTarget },
 	-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
 	{ 6346, not jps.buff(6346,"player") , "player" },
 	-- "Feu intérieur" 588 -- "Volonté intérieure" 73413
@@ -506,7 +516,8 @@ local spellTable = {
 	-- "Fortitude" 21562 Keep Fortitude up 
 	{ 21562, jps.buffMissing(21562) , "player" },
 	-- "Soins" 2050
-	{ 2050, type(HealFriendlyTarget) == "string" , HealFriendlyTarget },
+	{ 2050, type(HealTarget) == "string" , HealTarget },
+	{ 2050, LowestImportantUnitHealth > priest.AvgAmountHeal , LowestImportantUnit },
 
 }
 

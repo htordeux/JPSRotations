@@ -41,7 +41,7 @@ jps.registerRotation("PRIEST","SHADOW",function()
 local CountInRange, AvgHealthLoss, FriendUnit = jps.CountInRaidStatus(1)
 local playerhealth =  jps.hp("player","abs")
 local playerhealthpct = jps.hp("player")
-local playermana = jps.roundValue(UnitPower ("player",0)/UnitPowerMax ("player",0),2)
+local playermana = jps.roundValue(UnitPower("player",0)/UnitPowerMax("player",0),2)
 	
 ----------------------
 -- HELPER
@@ -123,7 +123,7 @@ end
 if SilenceEnemyTarget == nil then
 	for _,unit in ipairs(EnemyUnit) do
 		if jps.canCast(15487,unit) then
-			if jps.IsCastingControl(unit) then 
+			if jps.ShouldKick(unit) then -- jps.IsCastingControl(unit)
 				SilenceEnemyTarget = unit
 			break end
 		end
@@ -222,7 +222,7 @@ local fnOrbs = function(unit)
 	if Orbs == 0 then return false end
 	if Orbs < 3 and jps.hp(unit) < 0.20 then return true end
 	if Orbs < 3 and jps.EnemyHealer(unit) then return true end
-	if Orbs < 3 and EnemyCaster(unit) == "cac" and jps.UnitIsUnit(unit.."target","player") then return true end
+	if Orbs < 3 and jps.UnitIsUnit(unit.."target","player") then return true end
 	return false
 end
 
