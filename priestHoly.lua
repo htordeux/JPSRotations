@@ -1,5 +1,6 @@
 -- jps.MultiTarget for Chakra: Sanctuary 81206
 -- jps.Interrupts for "Semblance spectrale" 108968
+-- jps.UseCDs for "Divine Star" Holy 110744 Shadow 122121 ONLY on LowestImportantUnit
 
 local L = MyLocalizationTable
 local spellTable = {}
@@ -76,7 +77,8 @@ local priestHolyPvP = function()
 	local LowestImportantUnitHealth = jps.hp(LowestImportantUnit,"abs") -- UnitHealthMax(unit) - UnitHealth(unit)
 	local LowestImportantUnitHpct = jps.hp(LowestImportantUnit) -- UnitHealth(unit) / UnitHealthMax(unit)
 	local POHTarget, groupToHeal, groupTableToHeal = jps.FindSubGroupTarget(priest.get("HealthRaid")/100) -- Target to heal with POH in RAID with AT LEAST 3 RAID UNIT of the SAME GROUP IN RANGE
-	
+	local PlayerIsFacingLowest = jps.PlayerIsFacing(LowestImportantUnit,30)	-- angle value between 10-180
+
 ----------------------------
 -- LOCAL FUNCTIONS FRIENDS
 ----------------------------
@@ -361,7 +363,8 @@ local spellTable = {
 	{ 47788, playerIsStun and not jps.useTrinketBool(1) and jps.hp("player") < 0.40 , "player" },
 	{ 47788, playerIsStun and not jps.useTrinketBool(1) and LowestImportantUnitHpct < 0.40 , LowestImportantUnit },
 	-- "Divine Star" Holy 110744 Shadow 122121
-	{ 110744, jps.IsSpellKnown(110744) and playerIsInterrupt and LowestImportantUnitHpct < priest.get("HealthRaid")/100 , "player" , "Interrupt_DivineStar" },
+	{ 110744, playerIsInterrupt and jps.IsSpellKnown(110744) and jps.hp("player") < jps.hp("player") < priest.get("HealthEmergency")/100 , "player" , "Interrupt_DivineStar" },
+	{ 110744, playerIsInterrupt and jps.IsSpellKnown(110744) and PlayerIsFacingLowest and CheckInteractDistance(LowestImportantUnit,4) == 1 , LowestImportantUnit , "FACING_Interrupt_DivineStar_" },
 	-- "Spectral Guise" -- "Semblance spectrale" 108968 -- fast out of combat drinking
 	{ 112833, jps.Interrupts and playerAggro and jps.IsSpellKnown(112833) , "player" , "Aggro_Spectral" },
 
@@ -401,7 +404,7 @@ local spellTable = {
 	},
 	
 	-- DISPEL	
-	{ "nested", true , parseDispel },
+	{ "nested", LowestImportantUnitHpct > 0.40 , parseDispel },
 
 	-- PLAYER AGGRO
 	{ "nested", playerAggro and jps.hp("player") < priest.get("HealthDPS")/100 ,
@@ -431,6 +434,8 @@ local spellTable = {
 					{ 2061, not jps.Moving and jps.hp("player") < 0.50 , "player" , "Aggro_SoinsRapides_Player" },
 					-- "Circle of Healing" 34861
 					{ 34861, true , "player" , "Aggro_COH_Player" },
+					-- "Divine Star" Holy 110744 Shadow 122121
+					{ 110744, jps.IsSpellKnown(110744) and jps.hp("player") < 0.50 , "player" , "Aggro_DivineStar" },
 				},
 			},
 			-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
@@ -474,6 +479,8 @@ local spellTable = {
 
 	{ "nested", LowestImportantUnitHpct < priest.get("HealthDPS")/100 ,
 		{
+			-- "Divine Star" Holy 110744 Shadow 122121
+			{ 110744, jps.UseCDs and jps.IsSpellKnown(110744) and PlayerIsFacingLowest and CheckInteractDistance(LowestImportantUnit,4) == 1 , LowestImportantUnit , "FACING_DivineStar_" },
 			-- "Holy Word: Serenity" 88684 -- Chakra: Serenity 81208
 			{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) , LowestImportantUnit , "Emergency_Serenity_"..LowestImportantUnit },
 			-- "Prière de guérison" 33076 
@@ -493,7 +500,7 @@ local spellTable = {
 			-- "Power Word: Shield" 17 
 			{ 17, LowestImportantUnitHpct < 0.40 and not jps.buff(17,LowestImportantUnit) and not jps.debuff(6788,LowestImportantUnit) , LowestImportantUnit , "Emergency_Shield_"..LowestImportantUnit },
 			-- "Circle of Healing" 34861
-			{ 34861, AvgHealthLoss < priest.get("HealthRaid")/100 , LowestImportantUnit , "Emergency__COH_"..LowestImportantUnit },
+			{ 34861, AvgHealthLoss < priest.get("HealthRaid")/100 , LowestImportantUnit , "Emergency_COH_"..LowestImportantUnit },
 			-- "Don des naaru" 59544
 			{ 59544, (select(2,GetSpellBookItemInfo(priest.Spell["NaaruGift"]))~=nil) , LowestImportantUnit , "Emergency_Naaru_"..LowestImportantUnit },
 			-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
@@ -508,7 +515,7 @@ local spellTable = {
 	{ "nested", jps.FaceTarget and canDPS(rangedTarget) and LowestImportantUnitHpct > priest.get("HealthDPS")/100 , parseDamage },
 
 	-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
-	{ 139, type(RenewTarget) == "string" , RenewTarget },
+	{ 139, type(RenewTarget) == "string" , RenewTarget , "Renew_Target_" },
 	-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
 	{ 6346, not jps.buff(6346,"player") , "player" },
 	-- "Feu intérieur" 588 -- "Volonté intérieure" 73413
@@ -516,7 +523,7 @@ local spellTable = {
 	-- "Fortitude" 21562 Keep Fortitude up 
 	{ 21562, jps.buffMissing(21562) , "player" },
 	-- "Soins" 2050
-	{ 2050, type(HealTarget) == "string" , HealTarget },
+	{ 2050, type(HealTarget) == "string" , HealTarget , "Heal_Renew_" },
 	{ 2050, LowestImportantUnitHealth > priest.AvgAmountHeal , LowestImportantUnit },
 
 }

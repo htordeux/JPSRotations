@@ -1,5 +1,6 @@
 -- jps.MultiTarget for "MindSear" 48045
--- jps.Interrupts for "Semblance spectrale" 108968
+-- jps.Interrupts for "Semblance spectrale" 108968 -- because lose the orbs in Kotmogu Temple
+-- jps.UseCDs for "Shadow Word: Pain" 589 on "mouseover"
 
 local L = MyLocalizationTable
 local canDPS = jps.canDPS
@@ -352,7 +353,7 @@ local spellTable = {
 	{ 34914, not jps.Moving and type(VampEnemyTarget) == "string" , VampEnemyTarget , "Vamp_MultiUnit_" },
 	-- "Shadow Word: Pain" 589
 	{ 589, type(PainEnemyTarget) == "string" , PainEnemyTarget , "Pain_MultiUnit_" },
-	{ 589, fnPainEnemyTarget("mouseover") , "mouseover" , "Pain_MultiUnit_MOUSEOVER_" },	
+	{ 589, jps.UseCDs and fnPainEnemyTarget("mouseover") and playermana > 0.75 , "mouseover" , "Pain_MultiUnit_MOUSEOVER_" },	
 
 	-- "Vampiric Touch" 34914 Keep VT up with duration
 	{ 34914, not jps.Moving and UnitHealth(rangedTarget) > 120000 and jps.myDebuff(34914,rangedTarget) and jps.myDebuffDuration(34914,rangedTarget) < (jps.GCD*2) and not jps.myLastCast(34914) , rangedTarget , "VT_Keep_" },
