@@ -363,7 +363,7 @@ local spellTable = {
 	{ 47788, playerIsStun and not jps.useTrinketBool(1) and jps.hp("player") < 0.40 , "player" },
 	{ 47788, playerIsStun and not jps.useTrinketBool(1) and LowestImportantUnitHpct < 0.40 , LowestImportantUnit },
 	-- "Divine Star" Holy 110744 Shadow 122121
-	{ 110744, playerIsInterrupt and jps.IsSpellKnown(110744) and jps.hp("player") < jps.hp("player") < priest.get("HealthEmergency")/100 , "player" , "Interrupt_DivineStar" },
+	{ 110744, playerIsInterrupt and jps.IsSpellKnown(110744) and jps.hp("player") < priest.get("HealthEmergency")/100 , "player" , "Interrupt_DivineStar" },
 	{ 110744, playerIsInterrupt and jps.IsSpellKnown(110744) and PlayerIsFacingLowest and CheckInteractDistance(LowestImportantUnit,4) == 1 , LowestImportantUnit , "FACING_Interrupt_DivineStar_" },
 	-- "Spectral Guise" -- "Semblance spectrale" 108968 -- fast out of combat drinking
 	{ 112833, jps.Interrupts and playerAggro and jps.IsSpellKnown(112833) , "player" , "Aggro_Spectral" },
