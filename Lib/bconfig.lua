@@ -110,8 +110,19 @@ MessageInfoFrame.text:SetJustifyV("MIDDLE") -- BOTTOM MIDDLE TOP
 MessageInfoFrame:Hide()
 
 jps.MessageInfo = {}
-jps.listener.registerEvent("ACTIVE_TALENT_GROUP_CHANGED", function() jps.MessageInfo = {} end)
+jps.listener.registerEvent("ACTIVE_TALENT_GROUP_CHANGED", function() 
+	jps.MessageInfo = {}
+	-- MessageInfoFrame:Hide() -- not needed coz not jps.Combat 
+end)
+
+local initrotation = jps.Count
 local UpdateMessageInfo = function ()
+	local rotation = initrotation
+	if rotation ~= jps.Count then
+		jps.MessageInfo = {}
+		MessageInfoFrame:Hide()
+		initrotation = jps.Count
+	end
 	for _,info in ipairs(jps.MessageInfo) do
 		if info[1] == true then
 			MessageInfoFrame:Show()

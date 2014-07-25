@@ -152,6 +152,13 @@ for _,unit in ipairs(EnemyUnit) do
 	break end
 end
 
+local DispelOffensiveEnemyTarget = nil
+for _,unit in ipairs(EnemyUnit) do 
+	if jps.DispelOffensive(unit) then
+		DispelOffensiveEnemyTarget = unit
+	break end
+end
+
 ----------------------------
 -- LOCAL FUNCTIONS FRIENDS
 ----------------------------
@@ -164,6 +171,14 @@ for _,unit in ipairs(FriendUnit) do
 			LeapFriendFlag = unit
 		end
 	end
+end
+
+local isArena, _ = IsActiveBattlefieldArena()
+local RenewFriend = nil 
+for _,unit in ipairs(FriendUnit) do
+	if isArena == 1 and jps.hp(unit) < priest.get("HealthEmergency")/100 and not jps.buff(139,unit) then
+		RenewFriend = unit
+	break end
 end
 
 -- if jps.debuffDuration(114404,"target") > 18 and jps.UnitExists("target") then MoveBackwardStart() end
@@ -238,8 +253,6 @@ local parseControl = {
 	{ 108921, playerAggro and priest.canFear(rangedTarget) , rangedTarget },
 	-- "Void Tendrils" 108920 -- debuff "Void Tendril's Grasp" 114404
 	{ 108920, playerAggro and priest.canFear(rangedTarget) , rangedTarget },
-	-- Offensive Dispel -- "Dissipation de la magie" 528
-	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive(rangedTarget) , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
 }
 
 local parseControlFocus = {
@@ -253,8 +266,6 @@ local parseControlFocus = {
 	{ 108921, playerAggro and priest.canFear("focus") ,"focus"},
 	-- "Void Tendrils" 108920 -- debuff "Void Tendril's Grasp" 114404
 	{ 108920, playerAggro and priest.canFear("focus") , "focus" },
-	-- Offensive Dispel -- "Dissipation de la magie" 528
-	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive("focus") , "focus" , "|cff1eff00DispelOffensive_".."focus" },
 }
 
 local parseHeal = {
@@ -310,9 +321,13 @@ local spellTable = {
 	{ 122121, jps.IsSpellKnown(110744) and playerIsInterrupt , "player" , "Interrupt_DivineStar_" },
 	
 	-- FOCUS CONTROL
-	{ 15487, type(SilenceEnemyTarget) == "string" , SilenceEnemyTarget , "Silence_MultiUnit_" },
+	{ 15487, type(SilenceEnemyTarget) == "string" , SilenceEnemyTarget , "SILENCE_MultiUnit_" },
 	{ "nested", canDPS("focus") and not jps.LoseControl("focus") , parseControlFocus },
 	{ "nested", canDPS(rangedTarget) and not jps.LoseControl(rangedTarget) , parseControl },
+	-- Offensive Dispel -- "Dissipation de la magie" 528 -- includes canDPS
+	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive("focus") , "focus" , "|cff1eff00DispelOffensive_".."focus" },
+	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive(rangedTarget) , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
+	{ 528, jps.castEverySeconds(528,2) and type(DispelOffensiveEnemyTarget) == "string"  , DispelOffensiveEnemyTarget , "|cff1eff00DispelOffensive_MULTITARGET_" },
 
 	-- PLAYER AGGRO
 	{ "nested", playerAggro , parseAggro },
@@ -342,6 +357,8 @@ local spellTable = {
 	{ 15286, AvgHealthLoss < priest.get("HealthDPS")/100 , "player" },
 	-- SELF HEAL
 	{ "nested", playerhealthpct < priest.get("HealthEmergency")/100 , parseHeal },
+	-- "Renew" 139 FriendUnit in Arena
+	{ 139, type(RenewFriend) == "string" , RenewFriend },
 
 	-- "Mass Dispel" 32375 "Dissipation de masse"
 	-- "Dispel" "Purifier" 527 -- UNAVAILABLE IN SHADOW FORM 15473

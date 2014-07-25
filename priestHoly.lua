@@ -1,6 +1,7 @@
 -- jps.MultiTarget for Chakra: Sanctuary 81206
 -- jps.Interrupts for "Semblance spectrale" 108968
 -- jps.UseCDs for "Divine Star" Holy 110744 Shadow 122121 ONLY on LowestImportantUnit
+-- jps.Defensive Heal table is { "player","focus","target","targettarget","mouseover" }
 
 local L = MyLocalizationTable
 local spellTable = {}
@@ -16,6 +17,9 @@ local UnitGroupRolesAssigned = UnitGroupRolesAssigned
 local ipairs = ipairs
 local GetUnitName = GetUnitName
 local tinsert = table.insert
+-- table.insert(table, [ position, ] valeur) -- table.insert(t, 1, "element") insert an element at the start
+-- table.insert called without a position, it inserts the element in the last position of the array (and, therefore, moves no elements)
+-- table.remove called without a position, it removes the last element of the array.
 
 local iceblock = tostring(select(1,GetSpellInfo(45438))) -- ice block mage
 local divineshield = tostring(select(1,GetSpellInfo(642))) -- divine shield paladin
@@ -72,12 +76,12 @@ local priestHolyPvP = function()
 	local playerAggro = jps.FriendAggro("player")
 	local playerIsStun = jps.StunEvents(2) -- return true/false ONLY FOR PLAYER > 2 sec
 	local playerIsInterrupt = jps.InterruptEvents() -- return true/false ONLY FOR PLAYER
-
-	local LowestImportantUnit = jps.LowestImportantUnit() -- jps.Defensive heals table { "player","focus","target","targettarget","mouseover" }
+	-- if jps.Defensive Heal table is { "player","focus","target","targettarget","mouseover" }
+	local LowestImportantUnit = jps.LowestImportantUnit()
 	local LowestImportantUnitHealth = jps.hp(LowestImportantUnit,"abs") -- UnitHealthMax(unit) - UnitHealth(unit)
 	local LowestImportantUnitHpct = jps.hp(LowestImportantUnit) -- UnitHealth(unit) / UnitHealthMax(unit)
 	local POHTarget, groupToHeal, groupTableToHeal = jps.FindSubGroupTarget(priest.get("HealthRaid")/100) -- Target to heal with POH in RAID with AT LEAST 3 RAID UNIT of the SAME GROUP IN RANGE
-	local PlayerIsFacingLowest = jps.PlayerIsFacing(LowestImportantUnit,30)	-- angle value between 10-180
+	local PlayerIsFacingLowest = jps.PlayerIsFacing(LowestImportantUnit,30)	-- Angle value between 10-180
 
 ----------------------------
 -- LOCAL FUNCTIONS FRIENDS
@@ -222,16 +226,15 @@ local priestHolyPvP = function()
 
 	local DeathEnemyTarget = nil
 	for _,unit in ipairs(EnemyUnit) do 
-		if priest.canShadowWordDeath(unit) then 
+		if priest.canShadowWordDeath(unit) and LowestImportantUnitHpct > 0.25 then 
 			DeathEnemyTarget = unit
 		break end
 	end
 
-	local MassDispellTarget = nil
+	local DispelOffensiveEnemyTarget = nil
 	for _,unit in ipairs(EnemyUnit) do 
-		if jps.buff(divineshield,unit) then
-			MassDispellTarget = unit
-			jps.Macro("/target "..MassDispellTarget)
+		if jps.DispelOffensive(unit) and LowestImportantUnitHpct > priest.get("HealthDPS")/100 then
+			DispelOffensiveEnemyTarget = unit
 		break end
 	end
 
@@ -262,6 +265,15 @@ local priestHolyPvP = function()
 		{jps.buffId(81206),"SANCTUARY"},
 	}
 	
+	local MassDispellTarget = nil
+	for _,unit in ipairs(EnemyUnit) do 
+		if jps.buff(divineshield,unit) then
+			MassDispellTarget = unit
+			jps.Macro("/target "..MassDispellTarget)
+		break end
+	end
+	
+	if type(MassDispellTarget) == "string" then tinsert(MessageInfo,1,{true,"DivineShieldEnemyTarget"}) end
 	jps.MessageInfo = setmetatable(MessageInfo, {__index = function(t, index) return index end})
 
 ------------------------
@@ -341,6 +353,8 @@ local spellTable = {
 			{ 2061, LowestImportantUnitHpct < priest.get("HealthDPS")/100 , LowestImportantUnit },
 			-- "Renew" 139
 			{ 139, not jps.buff(139,LowestImportantUnit) , LowestImportantUnit },
+			-- "Soins rapides" 2061
+			{ 2061, true , LowestImportantUnit },
 		},
 	},
 	
@@ -447,9 +461,10 @@ local spellTable = {
 	
 	-- OFFENSIVE Dispel -- "Dissipation de la magie" 528
 	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive(rangedTarget) and LowestImportantUnitHpct > priest.get("HealthDPS")/100 , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
+	{ 528, jps.castEverySeconds(528,2) and type(DispelOffensiveEnemyTarget) == "string"  , DispelOffensiveEnemyTarget , "|cff1eff00DispelOffensive_MULTITARGET_" },
 	-- "Mot de l'ombre : Mort" 32379 -- FARMING OR PVP -- NOT PVE
 	{ 32379, type(DeathEnemyTarget) == "string" , DeathEnemyTarget , "|cFFFF0000Death_MultiUnit_" },
-	{ 32379, priest.canShadowWordDeath(rangedTarget) , rangedTarget , "|cFFFF0000Death_Health_"..rangedTarget },
+	{ 32379, priest.canShadowWordDeath(rangedTarget) and LowestImportantUnitHpct > 0.25 , rangedTarget , "|cFFFF0000Death_Health_"..rangedTarget },
 	
 	-- "Infusion de puissance" 10060 
 	{ 10060, AvgHealthLoss < priest.get("HealthRaid")/100 , "player" , "POWERINFUSION_" },
