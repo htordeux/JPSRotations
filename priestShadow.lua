@@ -1,5 +1,5 @@
 -- jps.MultiTarget for "MindSear" 48045
--- jps.Interrupts for "Semblance spectrale" 108968 -- because lose the orbs in Kotmogu Temple
+-- jps.Interrupts for "Semblance spectrale" 112833 -- because lose the orbs in Kotmogu Temple
 -- jps.UseCDs for "Shadow Word: Pain" 589 on "mouseover"
 
 local L = MyLocalizationTable
@@ -163,7 +163,6 @@ end
 -- LOCAL FUNCTIONS FRIENDS
 ----------------------------
 
-local LeapFriend = nil
 local LeapFriendFlag = nil 
 for _,unit in ipairs(FriendUnit) do
 	if priest.unitForLeap(unit) and jps.FriendAggro(unit) and jps.LoseControl(unit) then
@@ -282,7 +281,7 @@ local parseHeal = {
 }
 
 local parseAggro = {
-	-- "Semblance spectrale" 108968
+	-- "Semblance spectrale" 112833
 	{ 112833, jps.Interrupts and jps.IsSpellKnown(112833) , "player" , "Aggro_Spectral_" },
 	-- "Dispersion" 47585
 	{ 47585,  playerhealthpct < 0.40 , "player" , "Aggro_Dispersion_" },
@@ -364,7 +363,6 @@ local spellTable = {
 	-- "Dispel" "Purifier" 527 -- UNAVAILABLE IN SHADOW FORM 15473
 	-- "Leap of Faith" 73325 -- "Saut de foi"
 	{ 73325 , type(LeapFriendFlag) == "string" , LeapFriendFlag , "|cff1eff00Leap_MultiUnit_" },
-	{ 73325 , type(LeapFriend) == "string" , LeapFriend , "|cff1eff00Leap_MultiUnit_" },
 
 	-- "Vampiric Touch" 34914
 	{ 34914, not jps.Moving and type(VampEnemyTarget) == "string" , VampEnemyTarget , "Vamp_MultiUnit_" },

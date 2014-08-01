@@ -1,5 +1,5 @@
 -- jps.MultiTarget for Chakra: Sanctuary 81206
--- jps.Interrupts for "Semblance spectrale" 108968
+-- jps.Interrupts for "Semblance spectrale" 112833
 -- jps.UseCDs for "Divine Star" Holy 110744 Shadow 122121 ONLY on LowestImportantUnit
 -- jps.Defensive Heal table is { "player","focus","target","targettarget","mouseover" }
 
@@ -155,7 +155,6 @@ local priestHolyPvP = function()
 		end	
 	end
 
-	local LeapFriend = nil
 	local LeapFriendFlag = nil 
 	for _,unit in ipairs(FriendUnit) do
 		if priest.unitForLeap(unit) and jps.FriendAggro(unit) and jps.LoseControl(unit) then
@@ -311,7 +310,6 @@ local priestHolyPvP = function()
 		{ 527, type(DispelFriendlyTarget) == "string" , DispelFriendlyTarget , "|cff1eff00DispelFriendlyTarget_MultiUnit_" },
 		-- "Leap of Faith" 73325 -- "Saut de foi"
 		{ 73325 , type(LeapFriendFlag) == "string" , LeapFriendFlag , "|cff1eff00Leap_MultiUnit_" },
-		{ 73325 , type(LeapFriend) == "string" , LeapFriend , "|cff1eff00Leap_MultiUnit_" },
 	}
 	
 	parseDamage = {
@@ -379,7 +377,7 @@ local spellTable = {
 	-- "Divine Star" Holy 110744 Shadow 122121
 	{ 110744, playerIsInterrupt and jps.IsSpellKnown(110744) and jps.hp("player") < priest.get("HealthEmergency")/100 , "player" , "Interrupt_DivineStar" },
 	{ 110744, playerIsInterrupt and jps.IsSpellKnown(110744) and PlayerIsFacingLowest and CheckInteractDistance(LowestImportantUnit,4) == 1 , LowestImportantUnit , "FACING_Interrupt_DivineStar_" },
-	-- "Spectral Guise" -- "Semblance spectrale" 108968 -- fast out of combat drinking
+	-- "Spectral Guise" -- "Semblance spectrale" 112833 -- fast out of combat drinking
 	{ 112833, jps.Interrupts and playerAggro and jps.IsSpellKnown(112833) , "player" , "Aggro_Spectral" },
 
 	-- FOCUS CONTROL -- Chakra: Chastise 81209 -- Chakra: Sanctuary 81206 -- Chakra: Serenity 81208 -- Holy Word: Chastise 88625
