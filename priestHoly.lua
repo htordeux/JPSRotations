@@ -409,11 +409,11 @@ local spellTable = {
 	{ "nested", type(HolySparkTarget) == "string" and jps.hp(HolySparkTarget) < priest.get("HealthEmergency")/100 , 
 		{
 			-- "Holy Word: Serenity" 88684 -- Chakra: Serenity 81208
-			{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) , HolySparkTarget },
+			{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) , HolySparkTarget , "HolySparkTarget_" },
 			-- "Soins supérieurs" 2060
-			{ 2060, not jps.Moving and jps.buffStacks(63735,"player") == 2 , HolySparkTarget },
+			{ 2060, not jps.Moving and jps.buffStacks(63735,"player") == 2 , HolySparkTarget , "HolySparkTarget_" },
 			-- "Soins rapides" 2061
-			{ 2061, not jps.Moving and jps.buffStacks(63735,"player") < 2 , HolySparkTarget },
+			{ 2061, not jps.Moving and jps.buffStacks(63735,"player") < 2 , HolySparkTarget , "HolySparkTarget_" },
 		},
 	},
 	
@@ -470,25 +470,23 @@ local spellTable = {
 	{ 10060, AvgHealthLoss < priest.get("HealthRaid")/100 , "player" , "POWERINFUSION_" },
 
 	-- GROUP HEAL
-	{ "nested", CountInRange > 2 and AvgHealthLoss < priest.get("HealthRaid")/100 , 
+	{ "nested", CountInRange > 2 and AvgHealthLoss < priest.get("HealthRaid")/100 ,
 		{
 			-- "Lightwell" 126135
 			--{ 126135, LowestImportantUnitHpct < 0.50 , "player" ,"Lightwell" },
 			-- "Circle of Healing" 34861
-			{ 34861, true , LowestImportantUnit ,"COH_"..LowestImportantUnit },
+			{ 34861, true , LowestImportantUnit ,"COH_"..LowestImportantUnit , "COH_GROUP_" },
 			-- "Cascade" Holy 121135
 			{ 121135, jps.IsSpellKnown(121135) , LowestImportantUnit },
-		},
-	},
-
-	-- GROUP HEAL -- jps.MultiTarget for Chakra: Sanctuary 81206
-	{ "nested", not jps.Moving and jps.MultiTarget and CountInRange > 2 and AvgHealthLoss < priest.get("HealthRaid")/100 and LowestImportantUnitHpct > 0.25 , 
-		{
-			-- "Divine Hymn" 64843 -- Chakra: Sanctuary 81206
-			{ {"macro",sanctuaryHymn}, not playerAggro and not jps.buffId(81206) and jps.cooldown(81206) == 0 and jps.cooldown(64843) == 0 and AvgHealthLoss < 0.50 , "player" , "|cffa335eeSanctuary_HYMN"},
-			-- "Prayer of Healing" 596 -- Chakra: Sanctuary 81206 -- increase 25 % Prayer of Mending, Circle of Healing, Divine Star, Cascade, Halo, Divine Hymn
-			{ {"macro",sanctuaryPOH}, not jps.buffId(81206) and jps.cooldown(81206) == 0 and jps.cooldown(596) == 0 and (type(POHTarget) == "string") , POHTarget , "|cffa335eeSanctuary_POH"},
-			{ 596, (type(POHTarget) == "string") , POHTarget },
+			{ "nested", not jps.Moving and jps.MultiTarget and (type(POHTarget) == "string") ,
+				{
+					-- "Divine Hymn" 64843 -- Chakra: Sanctuary 81206
+					{ {"macro",sanctuaryHymn}, not playerAggro and not jps.buffId(81206) and jps.cooldown(81206) == 0 and jps.cooldown(64843) == 0 and AvgHealthLoss < 0.50 , "player" , "|cffa335eeSanctuary_HYMN"},
+					-- "Prayer of Healing" 596 -- Chakra: Sanctuary 81206 -- increase 25 % Prayer of Mending, Circle of Healing, Divine Star, Cascade, Halo, Divine Hymn
+					{ {"macro",sanctuaryPOH}, not jps.buffId(81206) and jps.cooldown(81206) == 0 and jps.cooldown(596) == 0 and (type(POHTarget) == "string") , POHTarget , "|cffa335eeSanctuary_POH"},
+					{ 596, true , POHTarget },
+				},
+			},
 		},
 	},
 
