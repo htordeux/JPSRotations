@@ -17,13 +17,13 @@ priestConfig:addCheckBox("Chastise", "use Chastise", "use Chastice in Combat", t
 priestConfig:addCheckBox("ShadowPain", "use ShadowPain", "use ShadowPain in Combat", true)
 priestConfig:addCheckBox("Cascade", "use Cascade", "use Cascade in Combat", true)
 priestConfig:addCheckBox("MindSear", "use MindSear", "use MindSear in Combat", true)
+priestConfig:addCheckBox("Leap", "use Leap", "use Leap in Combat", true)
 
-priestConfig:addText("CheckBox for FOCUS")	
-priestConfig:addCheckBox("KeepFocus", "use Focus", "keep Focus set manually", false)
+--priestConfig:addNumericBox("NumericTest", "NumericBox Text: ", "NumericBox Tooltip Text", 10)
+-- priest.get("NumericTest")
 
---priestConfig:addNumericBox("numericTest", "NumericBox Text: ", "NumericBox Tooltip Text", 42) -- priest.get("numericTest")
---priestConfig:addDropDown("dropdownNumber", "Drop Down Text: ", "DropDown Tooltip", {"Un", "Deux", "Trois", "Quatre", "Cinq" }, 2) -- priest.get("dropdownNumber") return number
-
+--priestConfig:addDropDown("DropdownNumber", "Drop Down Text: ", "DropDown Tooltip", {"Un", "Deux", "Trois", "Quatre", "Cinq" }, 2)
+-- priest.get("DropdownNumber") return number
 
 function priest.get(name)
     return priestConfig:get(name)
