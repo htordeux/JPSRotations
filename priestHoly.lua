@@ -342,9 +342,11 @@ local spellTable = {
 	{ "nested", jps.buff(27827) , 
 		{
 			-- "Divine Hymn" 64843
-			{ 64843, AvgHealthLoss < priest.get("HealthRaid")/100 , "player" },
+			{ 64843, CountInRange > 2 and AvgHealthLoss < priest.get("HealthRaid")/100 , "player" },
 			-- "Circle of Healing" 34861
 			{ 34861, true , LowestImportantUnit },
+			-- "Prayer of Healing" 596
+			{ 596, (type(POHTarget) == "string") and jps.buffStacks(63735,"player") == 2 , POHTarget },
 			-- "Soins supérieurs" 2060
 			{ 2060, jps.buffStacks(63735,"player") == 2 , LowestImportantUnit  },
 			-- "Prière de guérison" 33076
@@ -352,7 +354,7 @@ local spellTable = {
 			-- "Soins rapides" 2061
 			{ 2061, LowestImportantUnitHpct < priest.get("HealthDPS")/100 , LowestImportantUnit },
 			-- "Renew" 139
-			{ 139, not jps.buff(139,LowestImportantUnit) , LowestImportantUnit },
+			{ 139, type(RenewTarget) == "string" , RenewTarget },
 			-- "Soins rapides" 2061
 			{ 2061, true , LowestImportantUnit },
 		},
@@ -365,7 +367,8 @@ local spellTable = {
 			-- "Inner Fire" 588 Keep Inner Fire up 
 			{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player"), "player" }, -- "Volonté intérieure" 73413
 			-- "Fortitude" 21562 Keep Inner Fortitude up 
-			{ 21562, not jps.buff(21562,"player") , "player" },
+			--{ 21562, not jps.buff(21562,"player") , "player" },
+			{ 21562, jps.buffMissing(21562) , "player" },
 			-- "Enhanced Intellect" 79640 -- "Alchemist's Flask 75525
 			{ {"macro","/use item:75525"}, jps.buffDuration(79640,"player") < 900 , "player" },
 		},
@@ -406,7 +409,7 @@ local spellTable = {
 	-- "Prière de guérison" 33076 -- UnitAffectingCombat("player") == 1
 	{ 33076, not jps.buffTracker(33076) and jps.FriendAggro(LowestImportantUnit) , LowestImportantUnit , "Tracker_Mending_"..LowestImportantUnit },
 	-- "Holy Spark" 131567 "Etincelle sacrée"
-	{ "nested", type(HolySparkTarget) == "string" and jps.hp(HolySparkTarget) < priest.get("HealthEmergency")/100 , 
+	{ "nested", jps.buffId(81208) and type(HolySparkTarget) == "string" and jps.hp(HolySparkTarget) < priest.get("HealthEmergency")/100 , 
 		{
 			-- "Holy Word: Serenity" 88684 -- Chakra: Serenity 81208
 			{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) , HolySparkTarget , "HolySparkTarget_" },
@@ -478,12 +481,13 @@ local spellTable = {
 			{ 34861, true , LowestImportantUnit ,"COH_"..LowestImportantUnit , "COH_GROUP_" },
 			-- "Cascade" Holy 121135
 			{ 121135, jps.IsSpellKnown(121135) , LowestImportantUnit },
+			
 			{ "nested", not jps.Moving and jps.MultiTarget and (type(POHTarget) == "string") ,
 				{
 					-- "Divine Hymn" 64843 -- Chakra: Sanctuary 81206
-					{ {"macro",sanctuaryHymn}, not playerAggro and not jps.buffId(81206) and jps.cooldown(81206) == 0 and jps.cooldown(64843) == 0 and AvgHealthLoss < 0.50 , "player" , "|cffa335eeSanctuary_HYMN"},
+					--{ {"macro",sanctuaryHymn}, not playerAggro and not jps.buffId(81206) and jps.cooldown(81206) == 0 and jps.cooldown(64843) == 0 and AvgHealthLoss < 0.50 , "player" , "|cffa335eeSanctuary_HYMN"},
 					-- "Prayer of Healing" 596 -- Chakra: Sanctuary 81206 -- increase 25 % Prayer of Mending, Circle of Healing, Divine Star, Cascade, Halo, Divine Hymn
-					{ {"macro",sanctuaryPOH}, not jps.buffId(81206) and jps.cooldown(81206) == 0 and jps.cooldown(596) == 0 and (type(POHTarget) == "string") , POHTarget , "|cffa335eeSanctuary_POH"},
+					{ {"macro",sanctuaryPOH}, not jps.buffId(81206) and jps.cooldown(81206) == 0 and jps.cooldown(596) == 0 , POHTarget , "|cffa335eeSanctuary_POH"},
 					{ 596, true , POHTarget },
 				},
 			},
@@ -534,7 +538,7 @@ local spellTable = {
 	-- "Feu intérieur" 588 -- "Volonté intérieure" 73413
 	{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player") , "player" }, -- "target" by default must must be a valid target
 	-- "Fortitude" 21562 Keep Fortitude up 
-	{ 21562, jps.buffMissing(21562) , "player" },
+	--{ 21562, jps.buffMissing(21562) , "player" },
 	-- "Soins" 2050
 	{ 2050, type(HealTarget) == "string" , HealTarget , "Heal_Renew_" },
 	{ 2050, LowestImportantUnitHealth > priest.AvgAmountHeal , LowestImportantUnit },

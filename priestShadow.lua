@@ -306,7 +306,8 @@ local spellTable = {
 			-- "Inner Fire" 588 Keep Inner Fire up 
 			{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player"), "player" }, -- "Volonté intérieure" 73413
 			-- "Fortitude" 21562 Keep Inner Fortitude up 
-			{ 21562, not jps.buff(21562,"player") , "player" },
+			--{ 21562, not jps.buff(21562,"player") , "player" },
+			{ 21562, jps.buffMissing(21562) , "player" },
 			-- "Renew" 139 Self heal when critical 
 			{ 139, playerhealthpct < 0.90 and not jps.buff(139,"player"), "player" },
 			-- "Enhanced Intellect" 79640 -- "Alchemist's Flask 75525
@@ -320,9 +321,9 @@ local spellTable = {
 	{ 122121, jps.IsSpellKnown(110744) and playerIsInterrupt , "player" , "Interrupt_DivineStar_" },
 	
 	-- FOCUS CONTROL
-	{ 15487, type(SilenceEnemyTarget) == "string" , SilenceEnemyTarget , "SILENCE_MultiUnit_" },
 	{ "nested", canDPS("focus") and not jps.LoseControl("focus") , parseControlFocus },
 	{ "nested", canDPS(rangedTarget) and not jps.LoseControl(rangedTarget) , parseControl },
+	{ 15487, type(SilenceEnemyTarget) == "string" , SilenceEnemyTarget , "SILENCE_MultiUnit_" },
 	-- Offensive Dispel -- "Dissipation de la magie" 528 -- includes canDPS
 	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive("focus") , "focus" , "|cff1eff00DispelOffensive_".."focus" },
 	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive(rangedTarget) , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
@@ -399,7 +400,7 @@ local spellTable = {
 	-- "Inner Fire" 588 Keep Inner Fire up 
 	{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player"), "player" }, -- "Volonté intérieure" 73413
 	-- "Fortitude" 21562 Keep Fortitude up 
-	{ 21562, jps.buffMissing(21562) , "player" },
+	--{ 21562, jps.buffMissing(21562) , "player" },
 	-- "Mind Flay" 15407
 	{ 15407, true , rangedTarget },
 }

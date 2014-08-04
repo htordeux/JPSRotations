@@ -27,7 +27,9 @@ local L = MyLocalizationTable
 
 	local spell = nil
 	local target = nil
-	
+	local player = "player"
+	local playerhealth_deficiency =  jps.hp(player,"abs") -- UnitHealthMax(player) - UnitHealth(player)
+	local playerhealth_pct = jps.hp(player) 
 	local rangedTarget = warrior.rangedTarget()
 	local ClassEnemy = {
 		["WARRIOR"] = "cac",
@@ -101,7 +103,7 @@ local L = MyLocalizationTable
 		-- "Stoneform" 20594 "Forme de pierre"
 		{ 20594, playerAggro , "player" , "Stoneform" },
 		-- "Disarm" 676 "Désarmement"
-		{ 676, EnemyCaster(rangedTarget) == "cac", rangedTarget , "Disarm"  },
+		--{ 676, EnemyCaster(rangedTarget) == "cac", rangedTarget , "Disarm"  },
 		-- "Lifeblood" 74497 same ID spell & buff -- Herbalist.
 		{ 74497, UnitAffectingCombat("player")==1 , "player" , "Lifeblood" },
 		
