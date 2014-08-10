@@ -4,7 +4,7 @@
 
 local L = MyLocalizationTable
 local canDPS = jps.canDPS
-
+local strfind = string.find
 local UnitClass = UnitClass
 local UnitGroupRolesAssigned = UnitGroupRolesAssigned
 local UnitChannelInfo = UnitChannelInfo
@@ -100,6 +100,26 @@ if canDPS(rangedTarget) then jps.Macro("/target "..rangedTarget) end
 -- LOCAL FUNCTIONS ENEMY
 ------------------------
 
+local InsertUnit = function (unit)
+	local FocusCyclone = false
+	local i = 1
+	local auraName = select(1,UnitDebuff(unit, i)) -- UnitAura(unit,i,"HARMFUL")
+	while auraName do
+		if strfind(auraName,L["Polymorph"]) then
+			FocusCyclone = true
+		elseif strfind(auraName,L["Cyclone"]) then
+			FocusCyclone = true
+		end
+		if FocusCyclone then break end
+		i = i + 1
+		auraName = select(1,UnitDebuff(unit, i)) -- UnitAura(unit,i,"HARMFUL") 
+	end
+	return FocusCyclone
+end
+
+-- take care if "focus" not Polymorph and not Cyclone
+if canDPS("focus") and not FocusCyclone then table.insert(EnemyUnit,"focus") end
+
 local fnPainEnemyTarget = function(unit)
 	if canDPS(unit) and not jps.myDebuff(589,unit) and not jps.myLastCast(589) then
 		return true end
@@ -163,9 +183,20 @@ end
 -- LOCAL FUNCTIONS FRIENDS
 ----------------------------
 
+local VoidFriend = nil
+for _,unit in ipairs(FriendUnit) do
+	if not playerAggro and priest.unitForLeap(unit) and jps.hp(unit) < 0.25 and jps.hp("player") > 0.85 then
+		if jps.buff(23335,unit) or jps.buff(23333,unit) then -- 23335/alliance-flag -- 23333/horde-flag 
+			VoidFriend = unit
+		elseif jps.RoleInRaid(unit) == "HEALER" then
+			VoidFriend = unit
+		end
+	end
+end
+
 local LeapFriendFlag = nil 
 for _,unit in ipairs(FriendUnit) do
-	if priest.unitForLeap(unit) and jps.hp(unit) < 0.50 then
+	if priest.unitForLeap(unit) and jps.hp(unit) < 0.50 then -- priest.unitForLeap includes jps.FriendAggro and jps.LoseControl
 		if jps.buff(23335,unit) or jps.buff(23333,unit) then -- 23335/alliance-flag -- 23333/horde-flag 
 			LeapFriendFlag = unit
 		elseif jps.RoleInRaid(unit) == "HEALER" then
@@ -322,33 +353,37 @@ local spellTable = {
 	-- "Divine Star" Holy 110744 Shadow 122121
 	{ 122121, jps.IsSpellKnown(110744) and playerIsInterrupt , "player" , "Interrupt_DivineStar_" },
 	
+	-- "Shadow Word: Death " "Mot de l'ombre : Mort" 32379
+	{ 32379, jps.hp(rangedTarget) < 0.20 , rangedTarget, "castDeath_"..rangedTarget },
+	{ 32379, type(DeathEnemyTarget) == "string" , DeathEnemyTarget , "Death_MultiUnit" },
+	-- "Mind Blast" 8092 -- "Divine Insight" 109175 "Clairvoyance divine" gives buff 124430 Attaque mentale est instantanée et ne coûte pas de mana.
+	{ 8092, jps.buff(124430) , rangedTarget , "Blast_LowHealth" },
+	-- "Devouring Plague" 2944 -- orbs < 3 if timetodie < few sec
+	{ 2944, Orbs > 1 and jps.hp(rangedTarget) < 0.20 , rangedTarget , "ORBS_2_LowHealth" },
+	-- "Mind Spike" 73510 -- "From Darkness, Comes Light" 109186 gives buff -- "Surge of Darkness" 87160 -- 10 sec
+	{ 73510, jps.buffStacks(87160,"player") > 0 and jps.hp(rangedTarget) < 0.20 , rangedTarget , "Spike_LowHealth" },
+	
 	-- FOCUS CONTROL
 	{ 15487, type(SilenceEnemyHealer) == "string" , SilenceEnemyHealer , "SILENCE_MultiUnit_Healer" },
 	{ 15487, type(SilenceEnemyTarget) == "string" , SilenceEnemyTarget , "SILENCE_MultiUnit_Caster" },
 	{ "nested", canDPS("focus") and not jps.LoseControl("focus") , parseControlFocus },
 	{ "nested", canDPS(rangedTarget) and not jps.LoseControl(rangedTarget) , parseControl },
 
+	-- PLAYER AGGRO
+	{ "nested", playerAggro , parseAggro },
+
 	-- Offensive Dispel -- "Dissipation de la magie" 528 -- includes canDPS
 	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive("focus") , "focus" , "|cff1eff00DispelOffensive_".."focus" },
 	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive(rangedTarget) , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
 	{ 528, jps.castEverySeconds(528,2) and type(DispelOffensiveEnemyTarget) == "string"  , DispelOffensiveEnemyTarget , "|cff1eff00DispelOffensive_MULTITARGET_" },
 
-	-- PLAYER AGGRO
-	{ "nested", playerAggro , parseAggro },
-	
-	-- "Shadow Word: Death " "Mot de l'ombre : Mort" 32379
-	{ 32379, jps.hp(rangedTarget) < 0.20 , rangedTarget, "castDeath_"..rangedTarget },
-	{ 32379, type(DeathEnemyTarget) == "string" , DeathEnemyTarget , "Death_MultiUnit" },
 	-- "Devouring Plague" 2944
 	{ 2944, Orbs == 3 , rangedTarget , "ORBS_3" },
-	-- "Devouring Plague" 2944 -- orbs < 3 if timetodie < few sec
-	{ 2944, Orbs == 2 and jps.hp(rangedTarget) < 0.20 , rangedTarget , "ORBS_2_LowHealth" },
 	{ 2944, Orbs == 2 and jps.myDebuffDuration(34914,rangedTarget) > (6 + jps.GCD*3) and jps.myDebuffDuration(589,rangedTarget) > (6 + jps.GCD*3) , rangedTarget , "ORBS_2_Buff" },
-
 	-- "Mind Blast" 8092 -- "Glyph of Mind Spike" 33371 gives buff 81292 
 	{ 8092, (jps.buffStacks(81292) == 2) , rangedTarget },
-	-- "Mind Blast" 8092 -- "Divine Insight" 109175 gives buff 124430 Attaque mentale est instantanée et ne coûte pas de mana.
-	{ 8092, jps.buff(124430) , rangedTarget }, -- "Divine Insight" Clairvoyance divine 109175
+	-- "Mind Blast" 8092 -- "Divine Insight" 109175 "Clairvoyance divine" gives buff 124430 Attaque mentale est instantanée et ne coûte pas de mana.
+	{ 8092, jps.buff(124430) , rangedTarget },
 	-- "Mind Blast" 8092 -- 8 sec cd
 	{ 8092, not jps.Moving , rangedTarget },
 
@@ -368,6 +403,8 @@ local spellTable = {
 	-- "Dispel" "Purifier" 527 -- UNAVAILABLE IN SHADOW FORM 15473
 	-- "Leap of Faith" 73325 -- "Saut de foi"
 	{ 73325 , priest.get("Leap") and type(LeapFriendFlag) == "string" , LeapFriendFlag , "|cff1eff00Leap_MultiUnit_" },
+	-- "Void Shift" 108968
+	{ 108968 , type(VoidFriend) == "string" , VoidFriend , "|cff1eff00Void_MultiUnit_" },
 
 	-- "Vampiric Touch" 34914
 	{ 34914, not jps.Moving and type(VampEnemyTarget) == "string" , VampEnemyTarget , "Vamp_MultiUnit_" },

@@ -247,7 +247,7 @@ local priestHolyPvP = function()
 		{priest.Spell.flashHeal, priest.get("HealthEmergency")/100 , jps.buff(27827) },
 		{priest.Spell.greaterHeal, priest.get("HealthDPS")/100 , jps.buff(27827) },
 		{priest.Spell.heal, 1 , false },
-		{priest.Spell.prayerOfHealing, priest.get("HealthDPS")/100 , jps.MultiTarget or jps.buffId(81206)}
+		{priest.Spell.prayerOfHealing, priest.get("HealthDPS")/100 , jps.MultiTarget or jps.buffId(81206) or jps.buff(27827) }
 	}
 
 -- Avoid interrupt Channeling
@@ -320,13 +320,13 @@ local priestHolyPvP = function()
 		-- "Chastise" 88625 -- Chakra: Chastise 81209
 		{ 88625, jps.buffId(81209) , rangedTarget , "|cFFFF0000Chastise_"..rangedTarget },
 		-- "Flammes sacrées" 14914
-		{ 14914, true , rangedTarget },
+		{ 14914, jps.buffId(81209) , rangedTarget },
 		-- "Mot de pouvoir : Réconfort" -- "Power Word: Solace" 129250 -- REGEN MANA
-		{ 129250, true , rangedTarget },
+		{ 129250, jps.buffId(81209) , rangedTarget },
 		-- "Mot de l'ombre: Douleur" 589 -- FARMING OR PVP -- NOT PVE -- Only if 1 targeted enemy 
 		{ 589, priest.get("ShadowPain") and TargetCount == 1 and jps.myDebuffDuration(589,rangedTarget) == 0 , rangedTarget  },
 		-- "Châtiment" 585
-		{ 585, priest.get("Chastise") and not jps.Moving , rangedTarget  },
+		{ 585, jps.buffId(81209) and not jps.Moving , rangedTarget  },
 	}
 
 ------------------------
