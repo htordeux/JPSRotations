@@ -226,8 +226,8 @@ if jps.buff(47585,"player") then return end -- "Dispersion" 47585
 local canCastMindBlast = false
 local channeling = select(1,UnitChannelInfo("player")) -- "Mind Flay" is a channeling spell 
 if channeling == tostring(select(1,GetSpellInfo(15407))) and not jps.debuff(2944,rangedTarget) then -- not debuff "Devouring Plague" 2944
-	-- "Mind Blast" 8092 Stack shadow orbs -- buff 81292 "Glyph of Mind Spike"
-	if (jps.cooldown(8092) == 0) and jps.buff(81292,"player") then 
+	-- "Mind Blast" 8092 -- buff 81292 "Glyph of Mind Spike"
+	if (jps.cooldown(8092) == 0) and (jps.buffStacks(81292) == 2) then 
 		canCastMindBlast = true
 	-- "Divine Insight" proc "Mind Blast" 8092 -- "Divine Insight" Clairvoyance divine 109175 gives BUFF 124430
 	elseif jps.buff(124430) then
@@ -473,5 +473,6 @@ end, "Shadow Priest Custom", false, true)
 -- Void Shift  -- allows you to swap health percentages with your target raid or party member. It can be used to save raid members, by trading your life with theirs, or to save yourself in the same way
 -- Dispersion  -- use Dispersion immediately after using Mind Blast and while none of your DoTs need to be refreshed. In this way, Dispersion will essentially take the place of  Mind Flay in your rotation, which is your weakest spell
 -- Divine Insight 109175 -- reset the cooldown on Mind Blast and cause your next Mind Blast within 12 sec to be instant cast and cost no mana.
--- "From Darkness, Comes Light" 109186 gives BUFF -- "Surge of Darkness" 87160 87160 -- Les dégâts périodiques de votre Toucher vampirique ont 20% de chances de permettre à votre prochaine Pointe mentale de ne pas consommer vos effets de dégâts sur la durée, d’être incantée instantanément, de ne pas coûter de mana et d’infliger 50% de dégâts supplémentaires. Limité à 2 charges.
+-- "From Darkness, Comes Light" 109186 gives BUFF -- "Surge of Darkness" 87160 -- Les dégâts périodiques de votre Toucher vampirique ont 20% de chances de permettre à votre prochaine Pointe mentale
+-- de ne pas consommer vos effets de dégâts sur la durée, d’être incantée instantanément, de ne pas coûter de mana et d’infliger 50% de dégâts supplémentaires. Limité à 2 charges.
 -- "Glyph of Mind Spike" 33371 gives buff 81292 -- non-instant Mind Spikes, reduce the cast time of your next Mind Blast within 9 sec by 50%. This effect can stack up to 2 times.
