@@ -183,16 +183,16 @@ end
 -- LOCAL FUNCTIONS FRIENDS
 ----------------------------
 
-local VoidFriend = nil
-for _,unit in ipairs(FriendUnit) do
-	if not playerAggro and priest.unitForLeap(unit) and jps.hp(unit) < 0.25 and jps.hp("player") > 0.85 then
-		if jps.buff(23335,unit) or jps.buff(23333,unit) then -- 23335/alliance-flag -- 23333/horde-flag 
-			VoidFriend = unit
-		elseif jps.RoleInRaid(unit) == "HEALER" then
-			VoidFriend = unit
-		end
-	end
-end
+--local VoidFriend = nil
+--for _,unit in ipairs(FriendUnit) do
+--	if not playerAggro and priest.unitForLeap(unit) and jps.hp(unit) < 0.25 and jps.hp("player") > 0.85 then
+--		if jps.buff(23335,unit) or jps.buff(23333,unit) then -- 23335/alliance-flag -- 23333/horde-flag 
+--			VoidFriend = unit
+--		elseif jps.RoleInRaid(unit) == "HEALER" then
+--			VoidFriend = unit
+--		end
+--	end
+--end
 
 local LeapFriendFlag = nil 
 for _,unit in ipairs(FriendUnit) do
@@ -404,7 +404,7 @@ local spellTable = {
 	-- "Leap of Faith" 73325 -- "Saut de foi"
 	{ 73325 , priest.get("Leap") and type(LeapFriendFlag) == "string" , LeapFriendFlag , "|cff1eff00Leap_MultiUnit_" },
 	-- "Void Shift" 108968
-	{ 108968 , type(VoidFriend) == "string" , VoidFriend , "|cff1eff00Void_MultiUnit_" },
+	--{ 108968 , type(VoidFriend) == "string" , VoidFriend , "|cff1eff00Void_MultiUnit_" },
 
 	-- "Vampiric Touch" 34914
 	{ 34914, not jps.Moving and type(VampEnemyTarget) == "string" , VampEnemyTarget , "Vamp_MultiUnit_" },
