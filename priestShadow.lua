@@ -30,6 +30,26 @@ local EnemyCaster = function(unit)
 	return ClassEnemy[classTarget]
 end
 
+-- Debuff EnemyTarget NOT DPS
+local DebuffUnitCyclone = function (unit)
+	local Cyclone = false
+	local i = 1
+	local auraName = select(1,UnitDebuff(unit, i)) -- UnitAura(unit,i,"HARMFUL")
+	while auraName do
+		if strfind(auraName,L["Polymorph"]) then
+			Cyclone = true
+		elseif strfind(auraName,L["Cyclone"]) then
+			Cyclone = true
+		elseif strfind(auraName,L["Hex"]) then
+			Cyclone = true
+		end
+		if Cyclone then break end
+		i = i + 1
+		auraName = select(1,UnitDebuff(unit, i)) -- UnitAura(unit,i,"HARMFUL") 
+	end
+	return Cyclone
+end
+
 local iceblock = tostring(select(1,GetSpellInfo(45438))) -- ice block mage
 local divineshield = tostring(select(1,GetSpellInfo(642))) -- divine shield paladin
 
@@ -88,11 +108,11 @@ if jps.UnitExists("focus") and not canDPS("focus") then
 	if jps.getConfigVal("keep focus") == 0 then jps.Macro("/clearfocus") end
 end
 
-if canDPS("target") then rangedTarget =  "target"
-elseif canDPS("focus") then rangedTarget =  "focus"
-elseif canDPS("mouseover") then rangedTarget = "mouseover"
+if canDPS("target") and not DebuffUnitCyclone("target") then rangedTarget =  "target"
 elseif canDPS("targettarget") then rangedTarget = "targettarget"
+elseif canDPS("focus") and not DebuffUnitCyclone("target") then rangedTarget =  "focus"
 elseif canDPS("focustarget") then rangedTarget = "focustarget"
+elseif canDPS("mouseover") and not DebuffUnitCyclone("target") then rangedTarget = "mouseover"
 end
 if canDPS(rangedTarget) then jps.Macro("/target "..rangedTarget) end
 
@@ -100,25 +120,8 @@ if canDPS(rangedTarget) then jps.Macro("/target "..rangedTarget) end
 -- LOCAL FUNCTIONS ENEMY
 ------------------------
 
-local InsertUnit = function (unit)
-	local FocusCyclone = false
-	local i = 1
-	local auraName = select(1,UnitDebuff(unit, i)) -- UnitAura(unit,i,"HARMFUL")
-	while auraName do
-		if strfind(auraName,L["Polymorph"]) then
-			FocusCyclone = true
-		elseif strfind(auraName,L["Cyclone"]) then
-			FocusCyclone = true
-		end
-		if FocusCyclone then break end
-		i = i + 1
-		auraName = select(1,UnitDebuff(unit, i)) -- UnitAura(unit,i,"HARMFUL") 
-	end
-	return FocusCyclone
-end
-
 -- take care if "focus" not Polymorph and not Cyclone
-if canDPS("focus") and not FocusCyclone then table.insert(EnemyUnit,"focus") end
+if canDPS("focus") and not DebuffUnitCyclone("focus") then table.insert(EnemyUnit,"focus") end
 
 local fnPainEnemyTarget = function(unit)
 	if canDPS(unit) and not jps.myDebuff(589,unit) and not jps.myLastCast(589) then
@@ -132,7 +135,6 @@ local fnVampEnemyTarget = function(unit)
 	return false
 end
 
--- if enemy is casting sure is not under control ^^
 local SilenceEnemyHealer = nil
 for _,unit in ipairs(EnemyUnit) do
 	if jps.canCast(15487,unit) then
@@ -392,10 +394,10 @@ local spellTable = {
 	{ 73510, jps.buff(87160) and jps.buffDuration(87160) < (jps.GCD*4) , rangedTarget },
 	{ 73510, jps.buff(87160) and jps.myDebuff(34914,rangedTarget) , rangedTarget }, -- debuff "Vampiric Touch" 34914
 
-	-- "Vampiric Embrace" 15286
-	{ 15286, AvgHealthLoss < priest.get("HealthDPS")/100 , "player" },
 	-- SELF HEAL
 	{ "nested", playerhealthpct < priest.get("HealthEmergency")/100 , parseHeal },
+	-- "Vampiric Embrace" 15286
+	{ 15286, AvgHealthLoss < priest.get("HealthDPS")/100 , "player" },
 	-- "Renew" 139 FriendUnit in Arena
 	{ 139, type(RenewFriend) == "string" , RenewFriend },
 
