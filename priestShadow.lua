@@ -110,9 +110,9 @@ end
 
 if canDPS("target") and not DebuffUnitCyclone("target") then rangedTarget =  "target"
 elseif canDPS("targettarget") then rangedTarget = "targettarget"
-elseif canDPS("focus") and not DebuffUnitCyclone("target") then rangedTarget =  "focus"
+elseif canDPS("focus") and not DebuffUnitCyclone("focus") then rangedTarget =  "focus"
 elseif canDPS("focustarget") then rangedTarget = "focustarget"
-elseif canDPS("mouseover") and not DebuffUnitCyclone("target") then rangedTarget = "mouseover"
+elseif canDPS("mouseover") and not DebuffUnitCyclone("mouseover") then rangedTarget = "mouseover"
 end
 if canDPS(rangedTarget) then jps.Macro("/target "..rangedTarget) end
 
