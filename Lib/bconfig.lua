@@ -51,30 +51,60 @@ end
 -- BUTTON for Mconfig
 ------------------------------------
 
-local button = CreateFrame("Button","MacroButton", UIParent, "SecureActionButtonTemplate")
+--local button = CreateFrame("Button","MacroButton", UIParent, "SecureActionButtonTemplate")
 
-button:ClearAllPoints()
-button:SetSize(36, 36)
-button:SetPoint("TOP",0,-50) -- button:SetPoint(point, ofsx, ofsy)
+--button:ClearAllPoints()
+--button:SetSize(36, 36)
+--button:SetPoint("TOP",0,-50) -- button:SetPoint(point, ofsx, ofsy)
 
-button:EnableMouse(true)
-button:SetMovable(true)
-button:RegisterForClicks("LeftButtonUp","RightButtonUp")
-button:RegisterForDrag("LeftButton")
-button:SetScript("OnDragStart", button.StartMoving)
-button:SetScript("OnDragStop", button.StopMovingOrSizing) 
+--button:EnableMouse(true)
+--button:SetMovable(true)
+--button:RegisterForClicks("LeftButtonUp","RightButtonUp")
+--button:RegisterForDrag("LeftButton")
+--button:SetScript("OnDragStart", button.StartMoving)
+--button:SetScript("OnDragStop", button.StopMovingOrSizing) 
 
-button.texture = button:CreateTexture("ARTWORK") -- create the icon texture
-button.texture:SetPoint('TOPRIGHT', button, -2, -2)
-button.texture:SetPoint('BOTTOMLEFT', button, 2, 2)
-button.texture:SetTexCoord(0.07, 0.93, 0.07, 0.93) -- cut off the blizzard border
-button.texture:SetTexture("INTERFACE/TARGETINGFRAME/UI-RaidTargetingIcon_8") -- set the default texture
+--button.texture = button:CreateTexture("ARTWORK") -- create the icon texture
+--button.texture:SetPoint('TOPRIGHT', button, -2, -2)
+--button.texture:SetPoint('BOTTOMLEFT', button, 2, 2)
+--button.texture:SetTexCoord(0.07, 0.93, 0.07, 0.93) -- cut off the blizzard border
+--button.texture:SetTexture("INTERFACE/TARGETINGFRAME/UI-RaidTargetingIcon_8") -- set the default texture
 
-button:SetAttribute("type","macro")
-button:SetAttribute("macrotext", "/pd");
---button:SetAttribute("macro","Marker") -- Name of Macro
+----button:SetAttribute("macro","Marker") -- Name of Macro
+--button:SetAttribute("type","macro")
+--button:SetAttribute("macrotext", "/pd");
 
 --button:Hide()
+
+function addMacroUIButton(name, icon, macro)
+
+	btn = CreateFrame("Button", name, UIParent, "SecureActionButtonTemplate")
+	
+	btn:RegisterForClicks("LeftButtonUp","RightButtonUp")
+	btn:SetSize(36, 36)
+	btn:SetPoint("TOP",0,-50) -- button:SetPoint(point, ofsx, ofsy)
+	
+	btn:EnableMouse(true)
+	btn:SetMovable(true)
+	btn:RegisterForClicks("LeftButtonUp","RightButtonUp")
+	btn:RegisterForDrag("LeftButton")
+	btn:SetScript("OnDragStart", btn.StartMoving)
+	btn:SetScript("OnDragStop", btn.StopMovingOrSizing) 
+	
+	btn.texture = btn:CreateTexture("ARTWORK")
+	btn.texture:SetPoint('TOPRIGHT', btn, -3, -3)
+	btn.texture:SetPoint('BOTTOMLEFT', btn, 3, 3)
+	btn.texture:SetTexCoord(0.07, 0.93, 0.07, 0.93) -- cut off the blizzard border
+	btn.texture:SetTexture(icon)
+ 
+	btn:SetAttribute("type","macro")
+	btn:SetAttribute("macrotext", macro);
+
+	btn:Show()
+	return btn
+end
+
+addMacroUIButton("priestbutton", "INTERFACE/TARGETINGFRAME/UI-RaidTargetingIcon_8", "/pd")
 
 ------------------------------------
 -- MESSAGEINFOFRAME http://wowprogramming.com/forums/development/633

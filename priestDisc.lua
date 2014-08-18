@@ -4,7 +4,9 @@
 -- jps.FaceTarget to DPSing
 
 -- mConfig:createConfig(titleText,addOn,key,slashCommands)
-priestConfig = mConfig:createConfig("priest Config","priestDisc","Default",{"/pd"})
+local addOn = "priestDisc"
+local key = "Default"
+priestConfig = mConfig:createConfig("priest Config",addOn,key,{"/pd"})
 -- mConfig:addSlider(key, text, tooltip, minValue, maxValue, defaultValue,stepSize)
 priestConfig:addSlider("HealthEmergency", "HealthLoss Threshold Emergency" , " % Health Loss for Emergency Heal" , 35, 90, 70, 5)
 priestConfig:addSlider("HealthDPS", "HealthLoss Threshold DPS" , " % Health Loss for DPS EnemyUnit" , 50, 100, 85, 5)
@@ -28,6 +30,9 @@ priestConfig:addCheckBox("Leap", "use Leap", "use Leap in Combat", true)
 function priest.get(name)
     return priestConfig:get(name)
 end
+
+	local slashId = "MCONFIG_"..addOn.."_"..key
+	print("macro for PRIEST config : ",_G["SLASH_"..slashId.."1"])
 
 local L = MyLocalizationTable
 local spellTable = {}

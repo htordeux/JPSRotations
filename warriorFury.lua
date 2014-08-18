@@ -1,5 +1,7 @@
 -- mConfig:createConfig(titleText,addOn,key,slashCommands)
-warriorConfig = mConfig:createConfig("warrior Fury Config","warriorFury","Default",{"/wf"})
+local addOn = "warriorFury"
+local key = "Default"
+warriorConfig = mConfig:createConfig("warrior Fury Config",addOn,key,{"/wf"})
 
 -- mConfig:addSlider(key, text, tooltip, minValue, maxValue, defaultValue,stepSize)
 warriorConfig:addText("Rage levels")
@@ -16,6 +18,9 @@ warriorConfig:addCheckBox("Avatar", "use Avatar", "Use Avatar in combat", true)
 function warrior.get(name)
     return warriorConfig:get(name)
 end
+
+	local slashId = "MCONFIG_"..addOn.."_"..key
+	print("macro for WARRIOR config : ",_G["SLASH_"..slashId.."1"])
 
 local L = MyLocalizationTable
 	
