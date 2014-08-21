@@ -2,6 +2,7 @@
 local addOn = "WARRIOR"
 local key = "Default"
 warriorConfig = mConfig:createConfig("warrior Config",addOn,key,{"/wf"})
+
 -- mConfig:addSlider(key, text, tooltip, minValue, maxValue, defaultValue,stepSize)
 warriorConfig:addText("Rage levels")
 warriorConfig:addSlider("RageLevel", "RageLevel Threshold" , " RageLevel for Heroic Strike" , 35, 100, 60, 5)
@@ -10,9 +11,6 @@ warriorConfig:addSlider("Health", "HealthLoss Threshold" , " % Health Loss" , 55
 --spell usage checkboxes
 warriorConfig:addText("Spell Usage")	
 warriorConfig:addCheckBox("Avatar", "use Avatar", "Use Avatar in combat", true)
-
--- Button
---warriorConfig:addButtonToggle("/wf")
 
 function warrior.get(name)
     return warriorConfig:get(name)
@@ -27,7 +25,7 @@ local L = MyLocalizationTable
 -- ROTATION
 ----------------------------
 	
-	jps.registerRotation("WARRIOR","FURY",function()
+jps.registerRotation("WARRIOR","FURY",function()
 
 	local spell = nil
 	local target = nil

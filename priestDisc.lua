@@ -7,6 +7,7 @@
 local addOn = "PRIEST"
 local key = "Default"
 priestConfig = mConfig:createConfig("priest Config",addOn,key,{"/pd"})
+
 -- mConfig:addSlider(key, text, tooltip, minValue, maxValue, defaultValue,stepSize)
 priestConfig:addSlider("HealthEmergency", "HealthLoss Threshold Emergency" , " % Health Loss for Emergency Heal" , 35, 90, 70, 5)
 priestConfig:addSlider("HealthDPS", "HealthLoss Threshold DPS" , " % Health Loss for DPS EnemyUnit" , 50, 100, 85, 5)
@@ -21,10 +22,10 @@ priestConfig:addCheckBox("Cascade", "use Cascade", "use Cascade in Combat", true
 priestConfig:addCheckBox("MindSear", "use MindSear", "use MindSear in Combat", true)
 priestConfig:addCheckBox("Leap", "use Leap", "use Leap in Combat", true)
 
---priestConfig:addNumericBox("NumericTest", "NumericBox Text: ", "NumericBox Tooltip Text", 10)
--- priest.get("NumericTest")
+-- priestConfig:addNumericBox("NumericTest", "NumericBox Text: ", "NumericBox Tooltip Text", 10)
 
---priestConfig:addDropDown("DropdownNumber", "Drop Down Text: ", "DropDown Tooltip", {"Un", "Deux", "Trois", "Quatre", "Cinq" }, 2)
+-- priestConfig:addDropDown("DropdownNumber", "Drop Down Text: ", "DropDown Tooltip", {"Un", "Deux", "Trois", "Quatre", "Cinq" }, 2)
+
 -- priest.get("DropdownNumber") return number
 
 function priest.get(name)
