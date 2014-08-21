@@ -595,3 +595,20 @@ jps.registerRotation("PRIEST","HOLY", priestHolyPvP, "Holy Priest Custom", false
 -- "Divine Insight" 109175
 -- When you cast Greater Heal or Prayer of Healing, there is a 40% chance
 -- your next Prayer of Mending will not trigger its cooldown, and will jump to each target instantly.
+
+-- priest.Spell.renew = 139; 
+local spellStaticTable = {
+		{ 139, 'not jps.buff(priest.Spell.renew)' , "player" },
+		{ 585, 'priest.get("Chastise") and jps.buffDuration(priest.Spell.renew) > 0 and not jps.Moving' , "target" },
+		--{ 139, 'not jps.buff(139)' , "player" },
+		--{ 585, 'jps.buffId(588)' , "target" }, 
+	}
+
+jps.registerRotation("PRIEST","HOLY", function()
+
+	local spell = nil
+	local target = nil
+	local spell,target = parseStaticSpellTable(spellStaticTable)
+	return spell,target
+
+end, "Holy Priest Static" )

@@ -1,8 +1,7 @@
 -- mConfig:createConfig(titleText,addOn,key,slashCommands)
-local addOn = "warriorFury"
+local addOn = "WARRIOR"
 local key = "Default"
-warriorConfig = mConfig:createConfig("warrior Fury Config",addOn,key,{"/wf"})
-
+warriorConfig = mConfig:createConfig("warrior Config",addOn,key,{"/wf"})
 -- mConfig:addSlider(key, text, tooltip, minValue, maxValue, defaultValue,stepSize)
 warriorConfig:addText("Rage levels")
 warriorConfig:addSlider("RageLevel", "RageLevel Threshold" , " RageLevel for Heroic Strike" , 35, 100, 60, 5)

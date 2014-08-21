@@ -70,17 +70,14 @@ end
 --button.texture:SetTexCoord(0.07, 0.93, 0.07, 0.93) -- cut off the blizzard border
 --button.texture:SetTexture("INTERFACE/TARGETINGFRAME/UI-RaidTargetingIcon_8") -- set the default texture
 
-----button:SetAttribute("macro","Marker") -- Name of Macro
 --button:SetAttribute("type","macro")
 --button:SetAttribute("macrotext", "/pd");
 
---button:Hide()
-
-function addMacroUIButton(name, icon, macro)
+function addMacroUIButton(name, icon, macro) -- to test btn.name
 
 	btn = CreateFrame("Button", name, UIParent, "SecureActionButtonTemplate")
 	
-	btn:RegisterForClicks("LeftButtonUp","RightButtonUp")
+	btn:RegisterForClicks("AnyUp")
 	btn:SetSize(36, 36)
 	btn:SetPoint("TOP",0,-50) -- button:SetPoint(point, ofsx, ofsy)
 	
@@ -100,8 +97,18 @@ function addMacroUIButton(name, icon, macro)
 	btn:SetAttribute("type","macro")
 	btn:SetAttribute("macrotext", macro);
 
-	btn:Show()
+	--btn:Show()
 	return btn
+end
+
+function hideMacroUIButton()
+	local name = btn:GetName()
+	if name then btn:Hide() end
+end
+
+function showMacroUIButton()
+	local name = btn:GetName()
+	if name then btn:Show() end
 end
 
 addMacroUIButton("priestbutton", "INTERFACE/TARGETINGFRAME/UI-RaidTargetingIcon_8", "/pd")

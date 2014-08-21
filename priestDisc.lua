@@ -4,7 +4,7 @@
 -- jps.FaceTarget to DPSing
 
 -- mConfig:createConfig(titleText,addOn,key,slashCommands)
-local addOn = "priestDisc"
+local addOn = "PRIEST"
 local key = "Default"
 priestConfig = mConfig:createConfig("priest Config",addOn,key,{"/pd"})
 -- mConfig:addSlider(key, text, tooltip, minValue, maxValue, defaultValue,stepSize)
