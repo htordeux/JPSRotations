@@ -17,9 +17,7 @@ local UnitGroupRolesAssigned = UnitGroupRolesAssigned
 local ipairs = ipairs
 local GetUnitName = GetUnitName
 local tinsert = table.insert
--- table.insert(table, [ position, ] valeur) -- table.insert(t, 1, "element") insert an element at the start
--- table.insert called without a position, it inserts the element in the last position of the array (and, therefore, moves no elements)
--- table.remove called without a position, it removes the last element of the array.
+local UnitClass = UnitClass
 
 local iceblock = tostring(select(1,GetSpellInfo(45438))) -- ice block mage
 local divineshield = tostring(select(1,GetSpellInfo(642))) -- divine shield paladin

@@ -32,8 +32,14 @@ function priest.get(name)
     return priestConfig:get(name)
 end
 
-	local slashId = "MCONFIG_"..addOn.."_"..key
-	print("macro for PRIEST config : ",_G["SLASH_"..slashId.."1"])
+local slashId = "MCONFIG_"..addOn.."_"..key
+print("macro for PRIEST config : ",_G["SLASH_"..slashId.."1"])
+-- classDisplayName, class, classID = UnitClass("unit");
+-- class String - Localization-independent class name, used as some table keys; e.g. "MAGE", "WARRIOR", "DEATHKNIGHT".
+local classPlayer = select(2,UnitClass("player"))
+if classPlayer == "PRIEST" then
+	addMacroUIButton("INTERFACE/TARGETINGFRAME/UI-RaidTargetingIcon_8", _G["SLASH_"..slashId.."1"])
+end
 
 local L = MyLocalizationTable
 local spellTable = {}

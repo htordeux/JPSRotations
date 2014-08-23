@@ -73,9 +73,9 @@ end
 --button:SetAttribute("type","macro")
 --button:SetAttribute("macrotext", "/pd");
 
-function addMacroUIButton(name, icon, macro)
+function addMacroUIButton(icon, macro)
 
-	local btn = CreateFrame("Button", name, UIParent, "SecureActionButtonTemplate")
+	local btn = CreateFrame("Button", "macroButton" , UIParent, "SecureActionButtonTemplate")
 	
 	btn:RegisterForClicks("AnyUp")
 	btn:SetSize(36, 36)
@@ -111,7 +111,7 @@ function showMacroUIButton()
 	if name then btn:Show() end
 end
 
-addMacroUIButton("priest", "INTERFACE/TARGETINGFRAME/UI-RaidTargetingIcon_8", "/pd")
+--addMacroUIButton("priest", "INTERFACE/TARGETINGFRAME/UI-RaidTargetingIcon_8", "/pd")
 --addMacroUIButton("warrior", "INTERFACE/TARGETINGFRAME/UI-RaidTargetingIcon_2", "/wf")
 
 ------------------------------------
