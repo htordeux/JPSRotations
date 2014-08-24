@@ -408,20 +408,21 @@ local spellTable = {
 	-- "Void Shift" 108968
 	--{ 108968 , type(VoidFriend) == "string" , VoidFriend , "|cff1eff00Void_MultiUnit_" },
 
+	-- "Vampiric Touch" 34914 Keep VT up with duration
+	{ 34914, not jps.Moving and UnitHealth(rangedTarget) > 120000 and jps.myDebuff(34914,rangedTarget) and jps.myDebuffDuration(34914,rangedTarget) < (jps.GCD*2) and not jps.myLastCast(34914) , rangedTarget , "VT_Keep_" },
+	-- "Shadow Word: Pain" 589 Keep SW:P up with duration
+	{ 589, jps.myDebuff(589,rangedTarget) and jps.myDebuffDuration(589,rangedTarget) < (jps.GCD*2) and not jps.myLastCast(589) , rangedTarget , "Pain_Keep_" },
+	
 	-- "Vampiric Touch" 34914
 	{ 34914, not jps.Moving and type(VampEnemyTarget) == "string" , VampEnemyTarget , "Vamp_MultiUnit_" },
 	-- "Shadow Word: Pain" 589
 	{ 589, type(PainEnemyTarget) == "string" , PainEnemyTarget , "Pain_MultiUnit_" },
 	{ 589, jps.UseCDs and fnPainEnemyTarget("mouseover") and playermana > 0.75 , "mouseover" , "Pain_MultiUnit_MOUSEOVER_" },	
 
-	-- "Vampiric Touch" 34914 Keep VT up with duration
-	{ 34914, not jps.Moving and UnitHealth(rangedTarget) > 120000 and jps.myDebuff(34914,rangedTarget) and jps.myDebuffDuration(34914,rangedTarget) < (jps.GCD*2) and not jps.myLastCast(34914) , rangedTarget , "VT_Keep_" },
-	-- "Shadow Word: Pain" 589 Keep SW:P up with duration
-	{ 589, jps.myDebuff(589,rangedTarget) and jps.myDebuffDuration(589,rangedTarget) < (jps.GCD*2) and not jps.myLastCast(589) , rangedTarget , "Pain_Keep_"..rangedTarget },
 	-- "Vampiric Touch" 34914 
 	{ 34914, not jps.Moving and UnitHealth(rangedTarget) > 120000 and not jps.myDebuff(34914,rangedTarget) and not jps.myLastCast(34914) , rangedTarget , "VT_On_" },
 	-- "Shadow Word: Pain" 589 Keep up
-	{ 589, (not jps.myDebuff(589,rangedTarget)) and not jps.myLastCast(589) , rangedTarget , "Pain_On_"..rangedTarget},
+	{ 589, (not jps.myDebuff(589,rangedTarget)) and not jps.myLastCast(589) , rangedTarget , "Pain_On_" },
 
 	-- "Mind Flay" 15407 -- "Devouring Plague" 2944 -- "Shadow Word: Pain" 589
 	{ 15407, jps.IsSpellKnown(139139) and jps.debuff(2944,rangedTarget) and jps.myDebuffDuration(2944,rangedTarget) < jps.myDebuffDuration(589,rangedTarget) and jps.myDebuff(34914,rangedTarget) , rangedTarget , "MINDFLAYORBS_" },
