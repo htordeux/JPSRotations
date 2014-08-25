@@ -445,8 +445,12 @@ local spellTable = {
 	{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player"), "player" }, -- "Volonté intérieure" 73413
 	-- "Fortitude" 21562 Keep Fortitude up 
 	--{ 21562, jps.buffMissing(21562) , "player" },
+	-- "Dispersion" 47585 LOW MANA
+	{ 47585, jps.UseCDs and playermana < 0.50 and jps.myDebuffDuration(589,rangedTarget) > 6 and jps.myDebuffDuration(34914,rangedTarget) > 6 and jps.myLastCast(8092) , "player" , "Mana_Dispersion" },
 	-- "Mind Flay" 15407
-	{ 15407, true , rangedTarget },
+	{ 15407, jps.myDebuff(34914,rangedTarget) , rangedTarget },
+	{ 15407, jps.myDebuff(589,rangedTarget) , rangedTarget },
+	{ 15407, true , rangedTarget , "Fouet_Mental" },
 }
 
 	local spell = nil
@@ -455,10 +459,13 @@ local spellTable = {
 	return spell,target
 end, "Shadow Priest Custom", false, true)
 
+-- Cascade bounces from target to target (either friendly only or enemy only) splitting with each jump and either damaging or healing the target. The cascade jumps 4 times
+-- Cascade spell doesn't heal and damage at the same time When cast at an enemy, it will only bounce to enemies that you are in combat with --  Cascade only heals if cast on a friendly target
+
 -- Vampiric Touch is your primary means of mana regeneration. Casting it costs 3% of your base mana, and it returns 2% of your maximum mana with each tick
 
--- "Psychic Horror" 6404 -- Consumes all Shadow Orbs to terrify the target, causing them to tremble in horror for 1 sec plus 1 sec per Shadow Orb consumed
--- and to drop their weapons and shield for 8 sec.
+-- "Psychic Horror" 6404 -- Consumes all Shadow Orbs to terrify the target
+-- causing them to tremble in horror for 1 sec plus 1 sec per Shadow Orb consumed and to drop their weapons and shield for 8 sec.
 
 -- "Plume angélique" 121536 Angelic Feather gives buff 121557 -- local charge = GetSpellCharges(121536)
 
@@ -474,7 +481,10 @@ end, "Shadow Priest Custom", false, true)
 
 -- Vampiric Embrace -- 3-minute cooldown with a 15-second duration. It causes all the single-target damage you deal to heal nearby allies for 50% of the damage
 -- Void Shift  -- allows you to swap health percentages with your target raid or party member. It can be used to save raid members, by trading your life with theirs, or to save yourself in the same way
--- Dispersion  -- use Dispersion immediately after using Mind Blast and while none of your DoTs need to be refreshed. In this way, Dispersion will essentially take the place of  Mind Flay in your rotation, which is your weakest spell
+-- Dispersion  -- use Dispersion immediately after using Mind Blast and while none of your DoTs need to be refreshed.
+-- In this way, Dispersion will essentially take the place of Mind Flay in your rotation, which is your weakest spell
+-- Dispersion peut être lancé lorsque vous êtes étourdi, apeuré ou réduit au silence
+
 -- Divine Insight 109175 -- reset the cooldown on Mind Blast and cause your next Mind Blast within 12 sec to be instant cast and cost no mana.
 -- "From Darkness, Comes Light" 109186 gives BUFF -- "Surge of Darkness" 87160 -- Les dégâts périodiques de votre Toucher vampirique ont 20% de chances de permettre à votre prochaine Pointe mentale
 -- de ne pas consommer vos effets de dégâts sur la durée, d’être incantée instantanément, de ne pas coûter de mana et d’infliger 50% de dégâts supplémentaires. Limité à 2 charges.
