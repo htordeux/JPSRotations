@@ -88,7 +88,8 @@ local playerIsInterrupt = jps.InterruptEvents() -- return true/false ONLY FOR PL
 -- TARGET ENEMY
 ----------------------
 
-local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
+-- rangedTarget returns "target" by default, sometimes could be friend
+local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget()
 local EnemyCount = jps.RaidEnemyCount()
 
 -- set focus an enemy targeting you
@@ -197,10 +198,11 @@ end
 --	end
 --end
 
+-- priest.unitForLeap includes jps.FriendAggro and jps.LoseControl
 local LeapFriendFlag = nil 
 for _,unit in ipairs(FriendUnit) do
-	if priest.unitForLeap(unit) and jps.hp(unit) < 0.50 then -- priest.unitForLeap includes jps.FriendAggro and jps.LoseControl
-		if jps.buff(23335,unit) or jps.buff(23333,unit) then -- 23335/alliance-flag -- 23333/horde-flag 
+	if priest.unitForLeap(unit) and jps.hp(unit) < 0.50 then
+		if priest.get("Leap") and (jps.buff(23335,unit) or jps.buff(23333,unit)) then -- 23335/alliance-flag -- 23333/horde-flag 
 			LeapFriendFlag = unit
 		elseif jps.RoleInRaid(unit) == "HEALER" then
 			LeapFriendFlag = unit
@@ -249,7 +251,6 @@ return end
 
 -- Avoid interrupt Channeling
 if jps.ChannelTimeLeft() > 0 then return nil end
-
 
 ----------------------------
 -- MESSAGE FRAME TABLE
@@ -343,7 +344,7 @@ local spellTable = {
 			{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player"), "player" }, -- "Volonté intérieure" 73413
 			-- "Fortitude" 21562 Keep Inner Fortitude up 
 			--{ 21562, not jps.buff(21562,"player") , "player" },
-			{ 21562, jps.buffMissing(21562) , "player" },
+			--{ 21562, jps.buffMissing(21562) , "player" },
 			-- "Renew" 139 Self heal when critical 
 			{ 139, playerhealthpct < 0.90 and not jps.buff(139,"player"), "player" },
 			-- "Enhanced Intellect" 79640 -- "Alchemist's Flask 75525
@@ -375,11 +376,6 @@ local spellTable = {
 	-- PLAYER AGGRO
 	{ "nested", playerAggro , parseAggro },
 
-	-- Offensive Dispel -- "Dissipation de la magie" 528 -- includes canDPS
-	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive("focus") , "focus" , "|cff1eff00DispelOffensive_".."focus" },
-	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive(rangedTarget) , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
-	{ 528, jps.castEverySeconds(528,2) and type(DispelOffensiveEnemyTarget) == "string"  , DispelOffensiveEnemyTarget , "|cff1eff00DispelOffensive_MULTITARGET_" },
-
 	-- "Devouring Plague" 2944
 	{ 2944, Orbs == 3 , rangedTarget , "ORBS_3" },
 	{ 2944, Orbs == 2 and jps.myDebuffDuration(34914,rangedTarget) > (6 + jps.GCD*3) and jps.myDebuffDuration(589,rangedTarget) > (6 + jps.GCD*3) , rangedTarget , "ORBS_2_Buff" },
@@ -389,62 +385,67 @@ local spellTable = {
 	{ 8092, jps.buff(124430) , rangedTarget },
 	-- "Mind Blast" 8092 -- 8 sec cd
 	{ 8092, not jps.Moving , rangedTarget },
-
+	
 	-- "Mind Spike" 73510 -- "From Darkness, Comes Light" 109186 gives buff -- "Surge of Darkness" 87160 -- 10 sec -- jps.buffDuration(87160)
-	{ 73510, jps.buffStacks(87160,"player") == 2 , rangedTarget , "Spike_2" },
-	{ 73510, jps.buff(87160) and jps.myDebuffDuration(34914,rangedTarget) > (jps.GCD*2) , rangedTarget , "Spike_Debuff" }, -- debuff "Vampiric Touch" 34914
-
-	-- SELF HEAL
-	{ "nested", playerhealthpct < priest.get("HealthEmergency")/100 , parseHeal },
-	-- "Vampiric Embrace" 15286
-	{ 15286, AvgHealthLoss < priest.get("HealthDPS")/100 , "player" },
-	-- "Renew" 139 FriendUnit in Arena
-	{ 139, type(RenewFriend) == "string" , RenewFriend },
-
-	-- "Mass Dispel" 32375 "Dissipation de masse"
-	-- "Dispel" "Purifier" 527 -- UNAVAILABLE IN SHADOW FORM 15473
-	-- "Leap of Faith" 73325 -- "Saut de foi"
-	{ 73325 , priest.get("Leap") and type(LeapFriendFlag) == "string" , LeapFriendFlag , "|cff1eff00Leap_MultiUnit_" },
-	-- "Void Shift" 108968
-	--{ 108968 , type(VoidFriend) == "string" , VoidFriend , "|cff1eff00Void_MultiUnit_" },
+	{ 73510, jps.buff(87160) and jps.buffDuration(87160) < (jps.GCD*3) , rangedTarget , "Spike_GCD" },
 
 	-- "Vampiric Touch" 34914 Keep VT up with duration -- UnitHealth(rangedTarget) > 120000
 	{ 34914, not jps.Moving and jps.myDebuff(34914,rangedTarget) and jps.myDebuffDuration(34914,rangedTarget) < (jps.GCD*2) and not jps.myLastCast(34914) , rangedTarget , "VT_Keep_" },
 	-- "Shadow Word: Pain" 589 Keep SW:P up with duration
 	{ 589, jps.myDebuff(589,rangedTarget) and jps.myDebuffDuration(589,rangedTarget) < (jps.GCD*2) and not jps.myLastCast(589) , rangedTarget , "Pain_Keep_" },
-	
-	-- "Vampiric Touch" 34914
-	{ 34914, not jps.Moving and type(VampEnemyTarget) == "string" , VampEnemyTarget , "Vamp_MultiUnit_" },
-	-- "Shadow Word: Pain" 589
-	{ 589, type(PainEnemyTarget) == "string" , PainEnemyTarget , "Pain_MultiUnit_" },
-	{ 589, jps.UseCDs and fnPainEnemyTarget("mouseover") and playermana > 0.75 , "mouseover" , "Pain_MultiUnit_MOUSEOVER_" },	
-
 	-- "Vampiric Touch" 34914 -- UnitHealth(rangedTarget) > 120000
 	{ 34914, not jps.Moving and not jps.myDebuff(34914,rangedTarget) and not jps.myLastCast(34914) , rangedTarget , "VT_On_" },
 	-- "Shadow Word: Pain" 589 Keep up
 	{ 589, not jps.myDebuff(589,rangedTarget) and not jps.myLastCast(589) , rangedTarget , "Pain_On_" },
 
+	-- "Mind Spike" 73510 -- "From Darkness, Comes Light" 109186 gives buff -- "Surge of Darkness" 87160 -- 10 sec -- jps.buffDuration(87160)
+	{ 73510, jps.buffStacks(87160,"player") == 2 , rangedTarget , "Spike_2" },
+	{ 73510, jps.buff(87160) and jps.myDebuffDuration(34914,rangedTarget) > (jps.GCD*2) , rangedTarget , "Spike_Debuff" }, -- debuff "Vampiric Touch" 34914
+
+	-- "Vampiric Embrace" 15286
+	{ 15286, AvgHealthLoss < priest.get("HealthDPS")/100 , "player" },
+	-- SELF HEAL
+	{ "nested", playerhealthpct < priest.get("HealthEmergency")/100 , parseHeal },
+	-- "Renew" 139 FriendUnit in Arena
+	{ 139, type(RenewFriend) == "string" and not jps.buff(139,RenewFriend), RenewFriend },
+	-- "Power Word: Shield" 17 FriendUnit in Arena
+	{ 17, type(RenewFriend) == "string" and not jps.debuff(6788,RenewFriend) and not jps.buff(17,RenewFriend) , RenewFriend },
+
+	-- "Mass Dispel" 32375 "Dissipation de masse"
+	-- "Dispel" "Purifier" 527 -- UNAVAILABLE IN SHADOW FORM 15473
+	-- "Leap of Faith" 73325 -- "Saut de foi"
+	{ 73325 , type(LeapFriendFlag) == "string" , LeapFriendFlag , "|cff1eff00Leap_MultiUnit_" },
+	-- "Void Shift" 108968
+	--{ 108968 , type(VoidFriend) == "string" , VoidFriend , "|cff1eff00Void_MultiUnit_" },
+	
 	-- "Mind Flay" 15407 -- "Devouring Plague" 2944 -- "Shadow Word: Pain" 589
 	{ 15407, jps.IsSpellKnown(139139) and jps.debuff(2944,rangedTarget) and jps.myDebuffDuration(2944,rangedTarget) < jps.myDebuffDuration(589,rangedTarget) and jps.myDebuff(34914,rangedTarget) , rangedTarget , "MINDFLAYORBS_" },
 	
+	-- "Vampiric Touch" 34914
+	{ 34914, not jps.Moving and type(VampEnemyTarget) == "string" , VampEnemyTarget , "Vamp_MultiUnit_" },
+	-- "Shadow Word: Pain" 589
+	{ 589, type(PainEnemyTarget) == "string" , PainEnemyTarget , "Pain_MultiUnit_" },
+	{ 589, jps.UseCDs and fnPainEnemyTarget("mouseover") and playermana > 0.60 , "mouseover" , "Pain_MultiUnit_MOUSEOVER_" },	
+
 	-- "Mindbender" "Torve-esprit" 123040 -- "Ombrefiel" 34433 "Shadowfiend"
 	{ 34433, priest.canShadowfiend(rangedTarget) , rangedTarget },
 	{ 123040, priest.canShadowfiend(rangedTarget) , rangedTarget },
 
 	-- "Cascade" Holy 121135 Shadow 127632
-	{ 127632, priest.get("Cascade") and EnemyCount > 3 , rangedTarget , "Cascade_"  },
+	{ 127632, priest.get("Cascade") and EnemyCount > 3 and playermana > 0.60 , rangedTarget , "Cascade_"  },
 	-- "MindSear" 48045
 	{  48045, priest.get("MindSear") and not jps.Moving and jps.MultiTarget and EnemyCount > 4 , rangedTarget  },
-
+	
+	-- Offensive Dispel -- "Dissipation de la magie" 528 -- includes canDPS
+	{ 528, jps.castEverySeconds(528,10) and jps.DispelOffensive(rangedTarget) , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
+	{ 528, jps.castEverySeconds(528,10) and type(DispelOffensiveEnemyTarget) == "string"  , DispelOffensiveEnemyTarget , "|cff1eff00DispelOffensive_MULTITARGET_" },
+	
 	-- "Power Infusion" "Infusion de puissance" 10060
 	{ 10060, UnitAffectingCombat("player")==1 , "player" },
-
 	-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
 	{ 6346, not jps.buff(6346,"player") , "player" },
 	-- "Inner Fire" 588 Keep Inner Fire up 
 	{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player"), "player" }, -- "Volonté intérieure" 73413
-	-- "Fortitude" 21562 Keep Fortitude up 
-	--{ 21562, jps.buffMissing(21562) , "player" },
 	-- "Dispersion" 47585 LOW MANA
 	{ 47585, jps.UseCDs and playermana < 0.50 and jps.myDebuffDuration(589,rangedTarget) > 6 and jps.myDebuffDuration(34914,rangedTarget) > 6 and jps.myLastCast(8092) , "player" , "Mana_Dispersion" },
 	-- "Mind Flay" 15407

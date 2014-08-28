@@ -195,7 +195,7 @@ local priestHolyPvP = function()
 ---------------------
 -- ENEMY TARGET
 ---------------------
-
+	-- rangedTarget returns "target" by default, sometimes could be friend
 	local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
 
 	-- set focus an enemy targeting you
@@ -386,8 +386,9 @@ local spellTable = {
 	-- FOCUS CONTROL -- Chakra: Chastise 81209 -- Chakra: Sanctuary 81206 -- Chakra: Serenity 81208 -- Holy Word: Chastise 88625
 	{ {"macro",macroCancelaura}, jps.checkTimer("Chastise") == 0 and not jps.LoseControl(rangedTarget) and canDPS(rangedTarget) and jps.buffId(81208) and jps.cooldown(81208) == 0 , "player"  , "Cancelaura_Chakra_" },
 	{ {"macro",macroCancelaura}, jps.checkTimer("Chastise") == 0 and not jps.LoseControl("focus") and canDPS("focus") and jps.buffId(81206) and jps.cooldown(81206) == 0 , "player"  , "Cancelaura_Chakra_" },
+	-- Chastise is in ParseControl -- rangedTarget returns "target" by default, sometimes could be friend
 	{ "nested", LowestImportantUnitHpct > 0.40 and not jps.LoseControl("focus") and canDPS("focus") , parseControlFocus },
-	{ "nested", LowestImportantUnitHpct > 0.40 and not jps.LoseControl(rangedTarget) , parseControl },
+	{ "nested", LowestImportantUnitHpct > 0.40 and not jps.LoseControl(rangedTarget) and canDPS(rangedTarget) , parseControl },
 	
 	-- Chakra: Serenity 81208 -- "Holy Word: Serenity" 88684
 	{ 81208, not jps.buffId(81208) and jps.FinderLastMessage("Chastise_NO") == true , "player" , "|cffa335eeChakra_Serenity" },
@@ -406,8 +407,6 @@ local spellTable = {
 
 	-- "Prière de guérison" 33076 -- UnitAffectingCombat("player") == 1
 	{ 33076, not jps.buffTracker(33076) and jps.FriendAggro(LowestImportantUnit) , LowestImportantUnit , "Tracker_Mending_"..LowestImportantUnit },
-	-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
-	{ 139, type(RenewTarget) == "string" and jps.hp(RenewTarget) > priest.get("HealthEmergency")/100 , RenewTarget , "Renew_Target_" },
 	-- "Holy Spark" 131567 "Etincelle sacrée"
 	{ "nested", jps.buffId(81208) and type(HolySparkTarget) == "string" and jps.hp(HolySparkTarget) < priest.get("HealthEmergency")/100 , 
 		{
@@ -463,8 +462,8 @@ local spellTable = {
 	},
 	
 	-- OFFENSIVE Dispel -- "Dissipation de la magie" 528
-	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive(rangedTarget) and LowestImportantUnitHpct > priest.get("HealthDPS")/100 , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
-	{ 528, jps.castEverySeconds(528,2) and type(DispelOffensiveEnemyTarget) == "string"  , DispelOffensiveEnemyTarget , "|cff1eff00DispelOffensive_MULTITARGET_" },
+	{ 528, jps.castEverySeconds(528,10) and jps.DispelOffensive(rangedTarget) and LowestImportantUnitHpct > priest.get("HealthDPS")/100 , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
+	{ 528, jps.castEverySeconds(528,10) and type(DispelOffensiveEnemyTarget) == "string"  , DispelOffensiveEnemyTarget , "|cff1eff00DispelOffensive_MULTITARGET_" },
 	-- "Mot de l'ombre : Mort" 32379 -- FARMING OR PVP -- NOT PVE
 	{ 32379, type(DeathEnemyTarget) == "string" , DeathEnemyTarget , "|cFFFF0000Death_MultiUnit_" },
 	{ 32379, priest.canShadowWordDeath(rangedTarget) and LowestImportantUnitHpct > 0.25 , rangedTarget , "|cFFFF0000Death_Health_"..rangedTarget },
@@ -497,7 +496,7 @@ local spellTable = {
 	{ "nested", LowestImportantUnitHpct < priest.get("HealthDPS")/100 ,
 		{
 			-- "Divine Star" Holy 110744 Shadow 122121
-			{ 110744, jps.UseCDs and jps.IsSpellKnown(110744) and PlayerIsFacingLowest and CheckInteractDistance(LowestImportantUnit,4) == 1 , LowestImportantUnit , "FACING_DivineStar_" },
+			{ 110744, jps.UseCDs and priest.unitForBinding(LowestImportantUnit) and jps.IsSpellKnown(110744) and PlayerIsFacingLowest and CheckInteractDistance(LowestImportantUnit,4) == 1 , LowestImportantUnit , "FACING_DivineStar_" },
 			-- "Holy Word: Serenity" 88684 -- Chakra: Serenity 81208
 			{ {"macro",macroSerenity}, jps.cooldown(88684) == 0 and jps.buffId(81208) , LowestImportantUnit , "Emergency_Serenity_"..LowestImportantUnit },
 			-- "Prière de guérison" 33076 

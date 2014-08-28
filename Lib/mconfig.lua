@@ -32,8 +32,8 @@ frame:SetScript("OnEvent", function()
         if mConfigData[c.addOn] then
             c.values=mConfigData[c.addOn][c.key]
             c:update()
---       else
---            print(c.addOn)
+--      else
+--          print(c.addOn)
         end
     end
 end)
@@ -44,8 +44,6 @@ local function nextElementId()
     _nextElementId = _nextElementId + 1
     return name
 end
-
-
 
 local function addTooltip(frame, title, text)
     if text and title then
@@ -338,9 +336,11 @@ end
 function mConfig:Show()
     self.frames.configFrame:Show()
 end
+
 function mConfig:Hide()
     self.frames.configFrame:Hide()
 end
+
 function mConfig:Toggle()
     if self.frames.configFrame:IsShown() then
         self.frames.configFrame:Hide()
@@ -348,21 +348,22 @@ function mConfig:Toggle()
         self.frames.configFrame:Show()
     end
 end
+
 function mConfig:get(key)
     return self.values[key]
 end
+
 function mConfig:set(key, value)
     self.values[key] = value
     return self:update()
 end
+
 function mConfig:defaultValues()
     for k,v in pairs(self.defaults) do
         self.values[k] = v
     end
     return self:update()
 end
-
-
 
 
 function mConfig:createConfig(titleText,addOn,key,slashCommands)
@@ -473,8 +474,7 @@ function mConfig:createConfig(titleText,addOn,key,slashCommands)
     end
 
     return data
-end
-
+	end
 end
 
 

@@ -173,8 +173,8 @@ local priestDiscPvP = function()
 ---------------------
 -- ENEMY TARGET
 ---------------------
-
-	local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
+	-- rangedTarget returns "target" by default, sometimes could be friend
+	local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget()
 
 	if canDPS("target") then rangedTarget =  "target"
 	elseif canDPS("targettarget") then rangedTarget = "targettarget"
