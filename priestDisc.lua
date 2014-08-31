@@ -202,14 +202,6 @@ local priestDiscPvP = function()
 		break end
 	end
 
-	local MassDispellTarget = nil
-	for _,unit in ipairs(EnemyUnit) do 
-		if jps.buff(divineshield,unit) then
-			MassDispellTarget = unit
-			jps.Macro("/target "..MassDispellTarget)
-		break end
-	end
-
 ----------------------------------------------------------
 -- TRINKETS -- OPENING -- CANCELAURA -- STOPCASTING
 ----------------------------------------------------------
@@ -388,7 +380,7 @@ local InterruptTable = {
 	-- DISPEL	
 	{ "nested", true , parseDispel },
 	-- OFFENSIVE Dispel -- "Dissipation de la magie" 528
-	{ 528, jps.castEverySeconds(528,2) and jps.DispelOffensive(rangedTarget) , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
+	{ 528, jps.castEverySeconds(528,10) and jps.DispelOffensive(rangedTarget) , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
 
 	-- DAMAGE
 	-- "Flammes sacrées" 14914  -- "Evangélisme" 81661

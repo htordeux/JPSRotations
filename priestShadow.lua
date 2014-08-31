@@ -52,6 +52,7 @@ end
 
 local iceblock = tostring(select(1,GetSpellInfo(45438))) -- ice block mage
 local divineshield = tostring(select(1,GetSpellInfo(642))) -- divine shield paladin
+local isArena, _ = IsActiveBattlefieldArena()
 
 ----------------------------
 -- ROTATION
@@ -92,16 +93,22 @@ local playerIsInterrupt = jps.InterruptEvents() -- return true/false ONLY FOR PL
 local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget()
 local EnemyCount = jps.RaidEnemyCount()
 
--- set focus an enemy targeting you
-if canDPS("mouseover") and not jps.UnitExists("focus") and jps.UnitIsUnit("mouseovertarget","player") then
-	jps.Macro("/focus mouseover")
-	local name = GetUnitName("focus")
-	print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
--- set focus an enemy healer
-elseif canDPS("mouseover") and not jps.UnitExists("focus") and jps.EnemyHealer("mouseover") then
-	jps.Macro("/focus mouseover")
-	local name = GetUnitName("focus")
-	print("Enemy HEALER|cff1eff00 "..name.." |cffffffffset as FOCUS")
+if not jps.UnitExists("focus") then
+	-- set focus an enemy targeting you
+	if canDPS("mouseover") and jps.UnitIsUnit("mouseovertarget","player") then
+		jps.Macro("/focus mouseover")
+		local name = GetUnitName("focus")
+		print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
+	-- set focus an enemy healer
+	elseif canDPS("mouseover") and jps.EnemyHealer("mouseover") then
+		jps.Macro("/focus mouseover")
+		local name = GetUnitName("focus")
+		print("Enemy HEALER|cff1eff00 "..name.." |cffffffffset as FOCUS")
+	-- set focus second EnemyUnit
+	elseif TargetCount > 1 then
+		local enemyFocus = EnemyUnit[2]
+		if canDPS(enemyFocus) then jps.Macro("/focus enemyFocus") end
+	end
 end
 
 -- CONFIG jps.getConfigVal("keep focus") if you want to keep focus
@@ -110,9 +117,7 @@ if jps.UnitExists("focus") and not canDPS("focus") then
 end
 
 if canDPS("target") and not DebuffUnitCyclone("target") then rangedTarget =  "target"
-elseif canDPS("targettarget") then rangedTarget = "targettarget"
-elseif canDPS("focus") and not DebuffUnitCyclone("focus") then rangedTarget =  "focus"
-elseif canDPS("focustarget") then rangedTarget = "focustarget"
+elseif canDPS("targettarget") and not DebuffUnitCyclone("targettarget") then rangedTarget = "targettarget"
 elseif canDPS("mouseover") and not DebuffUnitCyclone("mouseover") then rangedTarget = "mouseover"
 end
 if canDPS(rangedTarget) then jps.Macro("/target "..rangedTarget) end
@@ -202,7 +207,7 @@ end
 local LeapFriendFlag = nil 
 for _,unit in ipairs(FriendUnit) do
 	if priest.unitForLeap(unit) and jps.hp(unit) < 0.50 then
-		if priest.get("Leap") and (jps.buff(23335,unit) or jps.buff(23333,unit)) then -- 23335/alliance-flag -- 23333/horde-flag 
+		if jps.buff(23335,unit) or jps.buff(23333,unit) then -- 23335/alliance-flag -- 23333/horde-flag 
 			LeapFriendFlag = unit
 		elseif jps.RoleInRaid(unit) == "HEALER" then
 			LeapFriendFlag = unit
@@ -210,12 +215,17 @@ for _,unit in ipairs(FriendUnit) do
 	end
 end
 
-local isArena, _ = IsActiveBattlefieldArena()
 local RenewFriend = nil 
+local RenewFriendHealth = 0.50
+local FriendHealerInRange = jps.FriendHealerInRange()
 for _,unit in ipairs(FriendUnit) do
-	if isArena == 1 and jps.hp(unit) < priest.get("HealthEmergency")/100 and not jps.buff(139,unit) then
-		RenewFriend = unit
-	break end
+	local unitHP = jps.hp(unit)
+	if not FriendHealerInRange then
+		if unitHP < RenewFriendHealth then
+			RenewFriend = unit
+			RenewFriendHealth = unitHP
+		end
+	end
 end
 
 -- if jps.debuffDuration(114404,"target") > 18 and jps.UnitExists("target") then MoveBackwardStart() end
@@ -269,7 +279,6 @@ if jps.ChannelTimeLeft() > 0 then return nil end
 -------------------------------------------------------------
 
 local fnOrbs = function(unit)
-	if not jps.UseCDs then return false end
 	if jps.LoseControl(unit) then return false end
 	if Orbs == 0 then return false end
 	if Orbs < 3 and jps.hp(unit) < 0.20 then return true end
@@ -311,10 +320,10 @@ local parseHeal = {
 	{ {"macro","/use item:5512"}, select(1,IsUsableItem(5512))==1 and jps.itemCooldown(5512)==0 , "player" },
 	-- "Power Word: Shield" 17	
 	{ 17, playerAggro and not jps.debuff(6788,"player") and not jps.buff(17,"player") , "player" },
-	-- "Renew" 139 Self heal when critical 
-	{ 139, not jps.buff(139,"player") , "player" },
 	-- "Prayer of Mending" "Prière de guérison" 33076 
 	{ 33076, playerAggro and not jps.buff(33076,"player") , "player" },
+	-- "Renew" 139 Self heal when critical 
+	{ 139, not jps.buff(139,"player") , "player" },
 }
 
 local parseAggro = {
@@ -356,6 +365,8 @@ local spellTable = {
 	{ jps.useTrinket(1), jps.useTrinketBool(1) and playerIsStun , "player" },
 	-- "Divine Star" Holy 110744 Shadow 122121
 	{ 122121, jps.IsSpellKnown(110744) and playerIsInterrupt , "player" , "Interrupt_DivineStar_" },
+	-- PLAYER AGGRO
+	{ "nested", playerAggro , parseAggro },
 	
 	-- "Shadow Word: Death " "Mot de l'ombre : Mort" 32379
 	{ 32379, jps.hp(rangedTarget) < 0.20 , rangedTarget, "castDeath_"..rangedTarget },
@@ -373,21 +384,15 @@ local spellTable = {
 	{ "nested", canDPS("focus") and not jps.LoseControl("focus") , parseControlFocus },
 	{ "nested", canDPS(rangedTarget) and not jps.LoseControl(rangedTarget) , parseControl },
 
-	-- PLAYER AGGRO
-	{ "nested", playerAggro , parseAggro },
-
 	-- "Devouring Plague" 2944
 	{ 2944, Orbs == 3 , rangedTarget , "ORBS_3" },
 	{ 2944, Orbs == 2 and jps.myDebuffDuration(34914,rangedTarget) > (6 + jps.GCD*3) and jps.myDebuffDuration(589,rangedTarget) > (6 + jps.GCD*3) , rangedTarget , "ORBS_2_Buff" },
-	-- "Mind Blast" 8092 -- "Glyph of Mind Spike" 33371 gives buff 81292 
-	{ 8092, (jps.buffStacks(81292) == 2) , rangedTarget },
-	-- "Mind Blast" 8092 -- "Divine Insight" 109175 "Clairvoyance divine" gives buff 124430 Attaque mentale est instantanée et ne coûte pas de mana.
-	{ 8092, jps.buff(124430) , rangedTarget },
-	-- "Mind Blast" 8092 -- 8 sec cd
-	{ 8092, not jps.Moving , rangedTarget },
-	
 	-- "Mind Spike" 73510 -- "From Darkness, Comes Light" 109186 gives buff -- "Surge of Darkness" 87160 -- 10 sec -- jps.buffDuration(87160)
 	{ 73510, jps.buff(87160) and jps.buffDuration(87160) < (jps.GCD*3) , rangedTarget , "Spike_GCD" },
+	-- "Mind Blast" 8092 -- "Glyph of Mind Spike" 33371 gives buff 81292 
+	{ 8092, (jps.buffStacks(81292) == 2) , rangedTarget },
+	-- "Mind Blast" 8092 -- 8 sec cd
+	{ 8092, not jps.Moving , rangedTarget },
 
 	-- "Vampiric Touch" 34914 Keep VT up with duration -- UnitHealth(rangedTarget) > 120000
 	{ 34914, not jps.Moving and jps.myDebuff(34914,rangedTarget) and jps.myDebuffDuration(34914,rangedTarget) < (jps.GCD*2) and not jps.myLastCast(34914) , rangedTarget , "VT_Keep_" },
@@ -414,7 +419,7 @@ local spellTable = {
 	-- "Mass Dispel" 32375 "Dissipation de masse"
 	-- "Dispel" "Purifier" 527 -- UNAVAILABLE IN SHADOW FORM 15473
 	-- "Leap of Faith" 73325 -- "Saut de foi"
-	{ 73325 , type(LeapFriendFlag) == "string" , LeapFriendFlag , "|cff1eff00Leap_MultiUnit_" },
+	{ 73325 , priest.get("Leap") and type(LeapFriendFlag) == "string" , LeapFriendFlag , "|cff1eff00Leap_MultiUnit_" },
 	-- "Void Shift" 108968
 	--{ 108968 , type(VoidFriend) == "string" , VoidFriend , "|cff1eff00Void_MultiUnit_" },
 	
@@ -447,7 +452,7 @@ local spellTable = {
 	-- "Inner Fire" 588 Keep Inner Fire up 
 	{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player"), "player" }, -- "Volonté intérieure" 73413
 	-- "Dispersion" 47585 LOW MANA
-	{ 47585, jps.UseCDs and playermana < 0.50 and jps.myDebuffDuration(589,rangedTarget) > 6 and jps.myDebuffDuration(34914,rangedTarget) > 6 and jps.myLastCast(8092) , "player" , "Mana_Dispersion" },
+	{ 47585, playermana < 0.50 and jps.myDebuffDuration(589,rangedTarget) > 6 and jps.myDebuffDuration(34914,rangedTarget) > 6 and jps.myLastCast(8092) , "player" , "Mana_Dispersion" },
 	-- "Mind Flay" 15407
 	{ 15407, jps.myDebuff(34914,rangedTarget) , rangedTarget },
 	{ 15407, jps.myDebuff(589,rangedTarget) , rangedTarget },

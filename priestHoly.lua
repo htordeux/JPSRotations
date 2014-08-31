@@ -263,16 +263,7 @@ local priestHolyPvP = function()
 		{jps.buffId(81209),"CHASTISE:|cffa335ee "},
 		{jps.buffId(81206),"SANCTUARY"},
 	}
-	
-	local MassDispellTarget = nil
-	for _,unit in ipairs(EnemyUnit) do 
-		if jps.buff(divineshield,unit) then
-			MassDispellTarget = unit
-			jps.Macro("/target "..MassDispellTarget)
-		break end
-	end
-	
-	if type(MassDispellTarget) == "string" then tinsert(MessageInfo,1,{true,"DivineShieldEnemyTarget"}) end
+
 	jps.MessageInfo = setmetatable(MessageInfo, {__index = function(t, index) return index end})
 
 ------------------------
