@@ -9,6 +9,7 @@ local UnitClass = UnitClass
 local UnitGroupRolesAssigned = UnitGroupRolesAssigned
 local UnitChannelInfo = UnitChannelInfo
 local UnitGUID = UnitGUID
+local tinsert = table.insert
 
 local ClassEnemy = {
 	["WARRIOR"] = "cac",
@@ -127,7 +128,7 @@ if canDPS(rangedTarget) then jps.Macro("/target "..rangedTarget) end
 ------------------------
 
 -- take care if "focus" not Polymorph and not Cyclone
-if canDPS("focus") and not DebuffUnitCyclone("focus") then table.insert(EnemyUnit,"focus") end
+if canDPS("focus") and not DebuffUnitCyclone("focus") then tinsert(EnemyUnit,"focus") end
 
 local fnPainEnemyTarget = function(unit)
 	if canDPS(unit) and not jps.myDebuff(589,unit) and not jps.myLastCast(589) then
@@ -368,6 +369,12 @@ local spellTable = {
 	-- PLAYER AGGRO
 	{ "nested", playerAggro , parseAggro },
 	
+	-- FOCUS CONTROL
+	{ 15487, type(SilenceEnemyHealer) == "string" , SilenceEnemyHealer , "SILENCE_MultiUnit_Healer" },
+	{ 15487, type(SilenceEnemyTarget) == "string" , SilenceEnemyTarget , "SILENCE_MultiUnit_Caster" },
+	{ "nested", canDPS("focus") and not jps.LoseControl("focus") , parseControlFocus },
+	{ "nested", canDPS(rangedTarget) and not jps.LoseControl(rangedTarget) , parseControl },
+	
 	-- "Shadow Word: Death " "Mot de l'ombre : Mort" 32379
 	{ 32379, jps.hp(rangedTarget) < 0.20 , rangedTarget, "castDeath_"..rangedTarget },
 	{ 32379, type(DeathEnemyTarget) == "string" , DeathEnemyTarget , "Death_MultiUnit" },
@@ -377,12 +384,6 @@ local spellTable = {
 	{ 2944, Orbs > 1 and jps.hp(rangedTarget) < 0.20 , rangedTarget , "ORBS_2_LowHealth" },
 	-- "Mind Spike" 73510 -- "From Darkness, Comes Light" 109186 gives buff -- "Surge of Darkness" 87160 -- 10 sec
 	{ 73510, jps.buffStacks(87160,"player") > 0 and jps.hp(rangedTarget) < 0.20 , rangedTarget , "Spike_LowHealth" },
-	
-	-- FOCUS CONTROL
-	{ 15487, type(SilenceEnemyHealer) == "string" , SilenceEnemyHealer , "SILENCE_MultiUnit_Healer" },
-	{ 15487, type(SilenceEnemyTarget) == "string" , SilenceEnemyTarget , "SILENCE_MultiUnit_Caster" },
-	{ "nested", canDPS("focus") and not jps.LoseControl("focus") , parseControlFocus },
-	{ "nested", canDPS(rangedTarget) and not jps.LoseControl(rangedTarget) , parseControl },
 
 	-- "Devouring Plague" 2944
 	{ 2944, Orbs == 3 , rangedTarget , "ORBS_3" },
