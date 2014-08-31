@@ -348,15 +348,14 @@ local spellTable = {
 			{ 2061, true , LowestImportantUnit },
 		},
 	},
-	
-	{"nested", not jps.Combat , 
+	-- "Spectral Guise" gives buff 119032
+	{"nested", not jps.Combat and not jps.buff(119032,"player") , 
 		{
 			-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
 			{ 6346, not jps.buff(6346,"player") , "player" },
 			-- "Inner Fire" 588 Keep Inner Fire up 
 			{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player"), "player" }, -- "Volonté intérieure" 73413
 			-- "Fortitude" 21562 Keep Inner Fortitude up 
-			--{ 21562, not jps.buff(21562,"player") , "player" },
 			{ 21562, jps.buffMissing(21562) , "player" },
 			-- "Enhanced Intellect" 79640 -- "Alchemist's Flask 75525
 			{ {"macro","/use item:75525"}, jps.buffDuration(79640,"player") < 900 , "player" },
