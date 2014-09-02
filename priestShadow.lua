@@ -94,27 +94,28 @@ local playerIsInterrupt = jps.InterruptEvents() -- return true/false ONLY FOR PL
 local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget()
 local EnemyCount = jps.RaidEnemyCount()
 
-if not jps.UnitExists("focus") then
+if not jps.UnitExists("focus") and canDPS("mouseover") then
 	-- set focus an enemy targeting you
-	if canDPS("mouseover") and jps.UnitIsUnit("mouseovertarget","player") then
+	if jps.UnitIsUnit("mouseovertarget","player") then
 		jps.Macro("/focus mouseover")
 		local name = GetUnitName("focus")
 		print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
 	-- set focus an enemy healer
-	elseif canDPS("mouseover") and jps.EnemyHealer("mouseover") then
+	elseif jps.EnemyHealer("mouseover") then
 		jps.Macro("/focus mouseover")
 		local name = GetUnitName("focus")
 		print("Enemy HEALER|cff1eff00 "..name.." |cffffffffset as FOCUS")
-	-- set focus second EnemyUnit
-	elseif TargetCount > 1 then
-		local enemyFocus = EnemyUnit[2]
-		if canDPS(enemyFocus) then jps.Macro("/focus enemyFocus") end
+	-- set focus on mouseover
+	elseif not jps.UnitIsUnit("target","mouseover") then
+		jps.Macro("/focus mouseover")
 	end
 end
 
 -- CONFIG jps.getConfigVal("keep focus") if you want to keep focus
 if jps.UnitExists("focus") and not canDPS("focus") then
 	if jps.getConfigVal("keep focus") == 0 then jps.Macro("/clearfocus") end
+elseif jps.UnitExists("focus") and jps.UnitIsUnit("target","focus") then
+	jps.Macro("/clearfocus")
 end
 
 if canDPS("target") and not DebuffUnitCyclone("target") then rangedTarget =  "target"
@@ -249,7 +250,7 @@ if channeling == tostring(select(1,GetSpellInfo(15407))) and not jps.debuff(2944
 	elseif jps.buff(124430) then
 		canCastMindBlast = true
 	-- "Mind Blast" 8092
-	elseif (jps.cooldown(8092) == 0) and (Orbs < 3) then 
+	elseif (jps.cooldown(8092) == 0) and (Orbs < 3) and not jps.Moving then 
 		canCastMindBlast = true
 	end
 end
@@ -273,6 +274,12 @@ if jps.ChannelTimeLeft() > 0 then return nil end
 		{ManaPlayer ,"LOW MANA:|cffa335ee "..playermana},
 	}
 	
+	if canDPS("target") and not jps.LoseControl("target") then
+		tinsert(MessageInfo,1,{true,"TARGET NOT CONTROL"})
+	elseif canDPS("focus") and not jps.LoseControl("focus") then
+		tinsert(MessageInfo,1,{true,"FOCUS NOT CONTROL"})
+	end
+
 	jps.MessageInfo = setmetatable(MessageInfo, {__index = function(t, index) return index end})
 
 -------------------------------------------------------------
@@ -381,14 +388,12 @@ local spellTable = {
 	-- "Mind Blast" 8092 -- "Divine Insight" 109175 "Clairvoyance divine" gives buff 124430 Attaque mentale est instantanée et ne coûte pas de mana.
 	{ 8092, jps.buff(124430) , rangedTarget , "Blast_LowHealth" },
 	-- "Devouring Plague" 2944 -- orbs < 3 if timetodie < few sec
-	{ 2944, Orbs > 1 and jps.hp(rangedTarget) < 0.20 , rangedTarget , "ORBS_2_LowHealth" },
+	{ 2944, Orbs == 3 , rangedTarget , "ORBS_3" },
+	{ 2944, Orbs == 2 and jps.hp(rangedTarget) < 0.20 , rangedTarget , "ORBS_2_LowHealth" },
+	{ 2944, Orbs == 2 and jps.myDebuffDuration(34914,rangedTarget) > (6 + jps.GCD*3) and jps.myDebuffDuration(589,rangedTarget) > (6 + jps.GCD*3) , rangedTarget , "ORBS_2_Buff" },
 	-- "Mind Spike" 73510 -- "From Darkness, Comes Light" 109186 gives buff -- "Surge of Darkness" 87160 -- 10 sec
 	{ 73510, jps.buffStacks(87160,"player") > 0 and jps.hp(rangedTarget) < 0.20 , rangedTarget , "Spike_LowHealth" },
-
-	-- "Devouring Plague" 2944
-	{ 2944, Orbs == 3 , rangedTarget , "ORBS_3" },
-	{ 2944, Orbs == 2 and jps.myDebuffDuration(34914,rangedTarget) > (6 + jps.GCD*3) and jps.myDebuffDuration(589,rangedTarget) > (6 + jps.GCD*3) , rangedTarget , "ORBS_2_Buff" },
-	-- "Mind Spike" 73510 -- "From Darkness, Comes Light" 109186 gives buff -- "Surge of Darkness" 87160 -- 10 sec -- jps.buffDuration(87160)
+	-- "Mind Spike" 73510 -- "From Darkness, Comes Light" 109186 gives buff -- "Surge of Darkness" 87160 -- 10 sec
 	{ 73510, jps.buff(87160) and jps.buffDuration(87160) < (jps.GCD*3) , rangedTarget , "Spike_GCD" },
 	-- "Mind Blast" 8092 -- "Glyph of Mind Spike" 33371 gives buff 81292 
 	{ 8092, (jps.buffStacks(81292) == 2) , rangedTarget },
@@ -406,27 +411,27 @@ local spellTable = {
 
 	-- "Mind Spike" 73510 -- "From Darkness, Comes Light" 109186 gives buff -- "Surge of Darkness" 87160 -- 10 sec -- jps.buffDuration(87160)
 	{ 73510, jps.buffStacks(87160,"player") == 2 , rangedTarget , "Spike_2" },
-	{ 73510, jps.buff(87160) and jps.myDebuffDuration(34914,rangedTarget) > (jps.GCD*2) , rangedTarget , "Spike_Debuff" }, -- debuff "Vampiric Touch" 34914
+	{ 73510, jps.buff(87160) and jps.myDebuffDuration(34914,rangedTarget) > (jps.GCD*3) , rangedTarget , "Spike_Debuff" }, -- debuff "Vampiric Touch" 34914
+	
+	-- "Mind Flay" 15407 -- "Devouring Plague" 2944 -- "Shadow Word: Pain" 589
+	{ 15407, jps.IsSpellKnown(139139) and jps.debuff(2944,rangedTarget) and jps.myDebuffDuration(2944,rangedTarget) < jps.myDebuffDuration(589,rangedTarget) and jps.myDebuff(34914,rangedTarget) , rangedTarget , "MINDFLAYORBS_" },
 
 	-- "Vampiric Embrace" 15286
 	{ 15286, AvgHealthLoss < priest.get("HealthDPS")/100 , "player" },
 	-- SELF HEAL
 	{ "nested", playerhealthpct < priest.get("HealthEmergency")/100 , parseHeal },
-	-- "Renew" 139 FriendUnit in Arena
+	-- "Renew" 139 FriendUnit in Arena or not FriendHealerInRange
 	{ 139, type(RenewFriend) == "string" and not jps.buff(139,RenewFriend), RenewFriend },
-	-- "Power Word: Shield" 17 FriendUnit in Arena
+	-- "Power Word: Shield" 17 FriendUnit in Arena or not FriendHealerInRange
 	{ 17, type(RenewFriend) == "string" and not jps.debuff(6788,RenewFriend) and not jps.buff(17,RenewFriend) , RenewFriend },
 
 	-- "Mass Dispel" 32375 "Dissipation de masse"
-	-- "Dispel" "Purifier" 527 -- UNAVAILABLE IN SHADOW FORM 15473
+	-- "Dispel" "Purifier" 527 -- UNAVAILABLE IN SHADOW FORM
+	-- "Void Shift" 108968 -- UNAVAILABLE in RBG
+	--{ 108968 , type(VoidFriend) == "string" , VoidFriend , "|cff1eff00Void_MultiUnit_" },
 	-- "Leap of Faith" 73325 -- "Saut de foi"
 	{ 73325 , priest.get("Leap") and type(LeapFriendFlag) == "string" , LeapFriendFlag , "|cff1eff00Leap_MultiUnit_" },
-	-- "Void Shift" 108968
-	--{ 108968 , type(VoidFriend) == "string" , VoidFriend , "|cff1eff00Void_MultiUnit_" },
-	
-	-- "Mind Flay" 15407 -- "Devouring Plague" 2944 -- "Shadow Word: Pain" 589
-	{ 15407, jps.IsSpellKnown(139139) and jps.debuff(2944,rangedTarget) and jps.myDebuffDuration(2944,rangedTarget) < jps.myDebuffDuration(589,rangedTarget) and jps.myDebuff(34914,rangedTarget) , rangedTarget , "MINDFLAYORBS_" },
-	
+
 	-- "Vampiric Touch" 34914
 	{ 34914, not jps.Moving and type(VampEnemyTarget) == "string" , VampEnemyTarget , "Vamp_MultiUnit_" },
 	-- "Shadow Word: Pain" 589
@@ -440,7 +445,7 @@ local spellTable = {
 	-- "Cascade" Holy 121135 Shadow 127632
 	{ 127632, priest.get("Cascade") and EnemyCount > 3 and playermana > 0.60 , rangedTarget , "Cascade_"  },
 	-- "MindSear" 48045
-	{  48045, priest.get("MindSear") and not jps.Moving and jps.MultiTarget and EnemyCount > 4 , rangedTarget  },
+	{ 48045, priest.get("MindSear") and not jps.Moving and jps.MultiTarget and EnemyCount > 4 , rangedTarget  },
 	
 	-- Offensive Dispel -- "Dissipation de la magie" 528 -- includes canDPS
 	{ 528, jps.castEverySeconds(528,10) and jps.DispelOffensive(rangedTarget) , rangedTarget , "|cff1eff00DispelOffensive_"..rangedTarget },
@@ -455,8 +460,6 @@ local spellTable = {
 	-- "Dispersion" 47585 LOW MANA
 	{ 47585, playermana < 0.50 and jps.myDebuffDuration(589,rangedTarget) > 6 and jps.myDebuffDuration(34914,rangedTarget) > 6 and jps.myLastCast(8092) , "player" , "Mana_Dispersion" },
 	-- "Mind Flay" 15407
-	{ 15407, jps.myDebuff(34914,rangedTarget) , rangedTarget },
-	{ 15407, jps.myDebuff(589,rangedTarget) , rangedTarget },
 	{ 15407, true , rangedTarget , "Fouet_Mental" },
 }
 
