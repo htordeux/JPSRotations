@@ -51,10 +51,6 @@ local DebuffUnitCyclone = function (unit)
 	return Cyclone
 end
 
-local iceblock = tostring(select(1,GetSpellInfo(45438))) -- ice block mage
-local divineshield = tostring(select(1,GetSpellInfo(642))) -- divine shield paladin
-local isArena, _ = IsActiveBattlefieldArena()
-
 ----------------------------
 -- ROTATION
 ----------------------------
@@ -93,7 +89,9 @@ local playerIsInterrupt = jps.InterruptEvents() -- return true/false ONLY FOR PL
 -- rangedTarget returns "target" by default, sometimes could be friend
 local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget()
 local EnemyCount = jps.RaidEnemyCount()
+local isArena, _ = IsActiveBattlefieldArena()
 
+-- Config FOCUS
 if not jps.UnitExists("focus") and canDPS("mouseover") then
 	-- set focus an enemy targeting you
 	if jps.UnitIsUnit("mouseovertarget","player") then
@@ -112,10 +110,10 @@ if not jps.UnitExists("focus") and canDPS("mouseover") then
 end
 
 -- CONFIG jps.getConfigVal("keep focus") if you want to keep focus
-if jps.UnitExists("focus") and not canDPS("focus") then
-	if jps.getConfigVal("keep focus") == 0 then jps.Macro("/clearfocus") end
-elseif jps.UnitExists("focus") and jps.UnitIsUnit("target","focus") then
+if jps.UnitExists("focus") and jps.UnitIsUnit("target","focus") then
 	jps.Macro("/clearfocus")
+elseif jps.UnitExists("focus") and not canDPS("focus") then
+	if jps.getConfigVal("keep focus") == false then jps.Macro("/clearfocus") end
 end
 
 if canDPS("target") and not DebuffUnitCyclone("target") then rangedTarget =  "target"
@@ -129,6 +127,7 @@ if canDPS(rangedTarget) then jps.Macro("/target "..rangedTarget) end
 ------------------------
 
 -- take care if "focus" not Polymorph and not Cyclone
+-- table.insert(t, 1, "element") insert an element at the start
 if canDPS("focus") and not DebuffUnitCyclone("focus") then tinsert(EnemyUnit,"focus") end
 
 local fnPainEnemyTarget = function(unit)
@@ -146,17 +145,8 @@ end
 local SilenceEnemyHealer = nil
 for _,unit in ipairs(EnemyUnit) do
 	if jps.canCast(15487,unit) then
-		if jps.EnemyHealer(unit) and not jps.LoseControl(unit) then -- jps.IsCastingHeal(unit)
+		if jps.EnemyHealer(unit) and not jps.LoseControl(unit) then
 			SilenceEnemyHealer = unit
-		break end
-	end
-end
-
-local SilenceEnemyTarget = nil
-for _,unit in ipairs(EnemyUnit) do
-	if jps.canCast(15487,unit) then
-		if jps.ShouldKick(unit) and not jps.LoseControl(unit) then -- jps.IsCastingControl(unit)
-			SilenceEnemyTarget = unit
 		break end
 	end
 end
@@ -241,8 +231,9 @@ if jps.buff(47585,"player") then return end -- "Dispersion" 47585
 	
 --	SpellStopCasting() -- "Mind Flay" 15407 -- "Mind Blast" 8092 -- buff 81292 "Glyph of Mind Spike"
 local canCastMindBlast = false
-local channeling = select(1,UnitChannelInfo("player")) -- "Mind Flay" is a channeling spell 
-if channeling == tostring(select(1,GetSpellInfo(15407))) and not jps.debuff(2944,rangedTarget) then -- not debuff "Devouring Plague" 2944
+local MindFlay = GetSpellInfo(15407)
+local Channeling = UnitChannelInfo("player") -- "Mind Flay" is a channeling spell
+if Channeling == MindFlay and not jps.debuff(2944,rangedTarget) then -- not debuff "Devouring Plague" 2944
 	-- "Mind Blast" 8092 -- buff 81292 "Glyph of Mind Spike"
 	if (jps.cooldown(8092) == 0) and (jps.buffStacks(81292) == 2) then 
 		canCastMindBlast = true
@@ -323,7 +314,7 @@ local parseControlFocus = {
 
 local parseHeal = {
 	-- "Prière du désespoir" 19236
-	{ 19236, select(2,GetSpellBookItemInfo(Desesperate))~=nil , "player" },
+	{ 19236, jps.IsSpellKnown(19236) , "player" },
 	-- "Pierre de soins" 5512
 	{ {"macro","/use item:5512"}, select(1,IsUsableItem(5512))==1 and jps.itemCooldown(5512)==0 , "player" },
 	-- "Power Word: Shield" 17	
@@ -378,9 +369,8 @@ local spellTable = {
 	
 	-- FOCUS CONTROL
 	{ 15487, type(SilenceEnemyHealer) == "string" , SilenceEnemyHealer , "SILENCE_MultiUnit_Healer" },
-	{ 15487, type(SilenceEnemyTarget) == "string" , SilenceEnemyTarget , "SILENCE_MultiUnit_Caster" },
-	{ "nested", canDPS("focus") and not jps.LoseControl("focus") , parseControlFocus },
 	{ "nested", canDPS(rangedTarget) and not jps.LoseControl(rangedTarget) , parseControl },
+	{ "nested", canDPS("focus") and not jps.LoseControl("focus") , parseControlFocus },
 	
 	-- "Shadow Word: Death " "Mot de l'ombre : Mort" 32379
 	{ 32379, jps.hp(rangedTarget) < 0.20 , rangedTarget, "castDeath_"..rangedTarget },

@@ -19,9 +19,6 @@ local GetUnitName = GetUnitName
 local tinsert = table.insert
 local UnitClass = UnitClass
 
-local iceblock = tostring(select(1,GetSpellInfo(45438))) -- ice block mage
-local divineshield = tostring(select(1,GetSpellInfo(642))) -- divine shield paladin
-
 local POH = tostring(select(1,GetSpellInfo(596)))
 local Hymn = tostring(select(1,GetSpellInfo(64843))) -- "Divine Hymn" 64843
 local Serenity = tostring(select(1,GetSpellInfo(88684))) -- "Holy Word: Serenity" 88684
@@ -198,16 +195,29 @@ local priestHolyPvP = function()
 	-- rangedTarget returns "target" by default, sometimes could be friend
 	local rangedTarget, EnemyUnit, TargetCount = jps.LowestTarget() -- returns "target" by default
 
-	-- set focus an enemy targeting you
-	if canDPS("mouseover") and not jps.UnitExists("focus") and jps.UnitIsUnit("mouseovertarget","player") then
-		jps.Macro("/focus mouseover")
-		local name = GetUnitName("focus")
-		print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffAttack Player set as FOCUS")
+	-- Config FOCUS
+	if not jps.UnitExists("focus") and canDPS("mouseover") then
+		-- set focus an enemy targeting you
+		if jps.UnitIsUnit("mouseovertarget","player") then
+			jps.Macro("/focus mouseover")
+			local name = GetUnitName("focus")
+			print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
+		-- set focus an enemy healer
+		elseif jps.EnemyHealer("mouseover") then
+			jps.Macro("/focus mouseover")
+			local name = GetUnitName("focus")
+			print("Enemy HEALER|cff1eff00 "..name.." |cffffffffset as FOCUS")
+		-- set focus on mouseover
+		elseif not jps.UnitIsUnit("target","mouseover") then
+			jps.Macro("/focus mouseover")
+		end
 	end
-	
+
 	-- CONFIG jps.getConfigVal("keep focus") if you want to keep focus
-	if jps.UnitExists("focus") and not canDPS("focus") then
-		if jps.getConfigVal("keep focus") == 0 then jps.Macro("/clearfocus") end 
+	if jps.UnitExists("focus") and jps.UnitIsUnit("target","focus") then
+		jps.Macro("/clearfocus")
+	elseif jps.UnitExists("focus") and not canDPS("focus") then
+		if jps.getConfigVal("keep focus") == false then jps.Macro("/clearfocus") end
 	end
 
 	if canDPS("target") then rangedTarget =  "target"
@@ -354,7 +364,7 @@ local spellTable = {
 		},
 	},
 	-- "Spectral Guise" gives buff 119032
-	{"nested", not jps.Combat and not jps.buff(119032,"player") , 
+	{"nested", not jps.Combat and not jps.buff(119032,"player") and LowestImportantUnitHpct > 0.70 , 
 		{
 			-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
 			{ 6346, not jps.buff(6346,"player") , "player" },
@@ -377,6 +387,9 @@ local spellTable = {
 	{ 110744, playerIsInterrupt and jps.IsSpellKnown(110744) and PlayerIsFacingLowest and CheckInteractDistance(LowestImportantUnit,4) == 1 , LowestImportantUnit , "FACING_Interrupt_DivineStar_" },
 	-- "Spectral Guise" -- "Semblance spectrale" 112833 -- fast out of combat drinking
 	{ 112833, jps.Interrupts and playerAggro and jps.IsSpellKnown(112833) , "player" , "Aggro_Spectral" },
+	
+	-- DISPEL	
+	{ "nested", LowestImportantUnitHpct > priest.get("HealthEmergency")/100 , parseDispel },
 
 	-- FOCUS CONTROL -- Chakra: Chastise 81209 -- Chakra: Sanctuary 81206 -- Chakra: Serenity 81208 -- Holy Word: Chastise 88625
 	{ {"macro",macroCancelaura}, jps.checkTimer("Chastise") == 0 and not jps.LoseControl(rangedTarget) and canDPS(rangedTarget) and jps.buffId(81208) and jps.cooldown(81208) == 0 , "player"  , "Cancelaura_Chakra_" },
@@ -384,14 +397,14 @@ local spellTable = {
 	-- Chastise is in ParseControl -- rangedTarget returns "target" by default, sometimes could be friend
 	{ "nested", LowestImportantUnitHpct > 0.40 and not jps.LoseControl(rangedTarget) and canDPS(rangedTarget) , parseControl },
 	{ "nested", LowestImportantUnitHpct > 0.40 and not jps.LoseControl("focus") and canDPS("focus") , parseControlFocus },
+	
+	-- DAMAGE -- Chakra: Chastise 81209
+	{ "nested", jps.FaceTarget and canDPS(rangedTarget) and LowestImportantUnitHpct > priest.get("HealthDPS")/100 , parseDamage },
 
 	-- Chakra: Serenity 81208 -- "Holy Word: Serenity" 88684
 	{ 81208, not jps.buffId(81208) and jps.FinderLastMessage("Chastise_NO") == true , "player" , "|cffa335eeChakra_Serenity" },
 	{ 81208, not jps.buffId(81208) and LowestImportantUnitHpct < priest.get("HealthDPS")/100 and jps.FinderLastMessage("Cancelaura") == false , "player" , "|cffa335eeChakra_Serenity" },
 	{ 81208, not jps.buffId(81208) and not jps.FaceTarget and jps.FinderLastMessage("Cancelaura") == false , "player" , "|cffa335eeChakra_Serenity" },
-	
-	-- DISPEL	
-	{ "nested", LowestImportantUnitHpct > priest.get("HealthEmergency")/100 , parseDispel },
 
 	-- "Guardian Spirit"
 	{ 47788, jps.FriendAggro(LowestImportantUnit) and LowestImportantUnitHpct < 0.40 , LowestImportantUnit },
@@ -416,6 +429,8 @@ local spellTable = {
 			{ 2061, not jps.Moving and jps.buffStacks(63735,"player") < 2 , HolySparkTarget , "HolySparkTarget_" },
 		},
 	},
+	-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
+	{ 139, type(RenewTarget) == "string" and LowestImportantUnitHpct > 0.70 , RenewTarget , "Renew_Target_" },
 
 	-- PLAYER AGGRO
 	{ "nested", playerAggro and jps.hp("player") < priest.get("HealthDPS")/100 ,
@@ -423,7 +438,7 @@ local spellTable = {
 			-- "Pierre de soins" 5512
 			{ {"macro","/use item:5512"}, select(1,IsUsableItem(5512))==1 and jps.itemCooldown(5512)==0 , "player" },
 			-- "Prière du désespoir" 19236
-			{ 19236, select(2,GetSpellBookItemInfo(priest.Spell["Desesperate"]))~=nil , "player" },
+			{ 19236, jps.IsSpellKnown(19236) , "player" },
 			-- "Prière de guérison" 33076
 			{ 33076, not jps.buff(33076) , "player" , "Aggro_Mending_Player" },
 			-- "Oubli" 586 -- Fantasme 108942 -- vous dissipez tous les effets affectant le déplacement sur vous-même et votre vitesse de déplacement ne peut être réduite pendant 5 s
@@ -452,7 +467,7 @@ local spellTable = {
 			-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
 			{ 139, not jps.buff(139,"player") , "player" ,"Aggro_Renew_Player" },
 			-- "Don des naaru" 59544
-			{ 59544, (select(2,GetSpellBookItemInfo(priest.Spell["NaaruGift"]))~=nil) , "player" , "Aggro_Naaru_Player" },
+			{ 59544, jps.IsSpellKnown(59544) , "player" , "Aggro_Naaru_Player" },
 			-- Dispel Player 527
 			{ 527, not playerIsStun and jps.canDispel("player",{"Magic"}) , "player" , "Aggro_Dispel_Player" },
 		},
@@ -516,7 +531,7 @@ local spellTable = {
 			{ 34861, AvgHealthLoss < priest.get("HealthRaid")/100 , LowestImportantUnit , "Emergency_COH_"..LowestImportantUnit },
 			{ 34861, CountInRange > 2 , LowestImportantUnit , "Emergency_COH_"..LowestImportantUnit },
 			-- "Don des naaru" 59544
-			{ 59544, (select(2,GetSpellBookItemInfo(priest.Spell["NaaruGift"]))~=nil) , LowestImportantUnit , "Emergency_Naaru_"..LowestImportantUnit },
+			{ 59544, jps.IsSpellKnown(59544) , LowestImportantUnit , "Emergency_Naaru_"..LowestImportantUnit },
 			-- "Renew" 139 -- Haste breakpoints are 12.5 and 16.7%(Holy)
 			{ 139, not jps.buff(139,LowestImportantUnit) , LowestImportantUnit , "Emergency_Renew_"..LowestImportantUnit },
 		},
@@ -590,20 +605,3 @@ jps.registerRotation("PRIEST","HOLY", priestHolyPvP, "Holy Priest Custom", false
 -- "Divine Insight" 109175
 -- When you cast Greater Heal or Prayer of Healing, there is a 40% chance
 -- your next Prayer of Mending will not trigger its cooldown, and will jump to each target instantly.
-
--- priest.Spell.renew = 139; 
-local spellStaticTable = {
-		{ 139, 'not jps.buff(priest.Spell.renew)' , "player" },
-		{ 585, 'priest.get("Chastise") and jps.buffDuration(priest.Spell.renew) > 0 and not jps.Moving' , "target" },
-		--{ 139, 'not jps.buff(139)' , "player" },
-		--{ 585, 'jps.buffId(588)' , "target" }, 
-	}
-
-jps.registerRotation("PRIEST","HOLY", function()
-
-	local spell = nil
-	local target = nil
-	local spell,target = parseStaticSpellTable(spellStaticTable)
-	return spell,target
-
-end, "Holy Priest Static" )

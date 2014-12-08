@@ -54,8 +54,6 @@ local canDPS = jps.canDPS
 local UnitGroupRolesAssigned = UnitGroupRolesAssigned
 local ipairs = ipairs
 
-local iceblock = tostring(select(1,GetSpellInfo(45438))) -- ice block mage
-local divineshield = tostring(select(1,GetSpellInfo(642))) -- divine shield paladin
 local UnitGetTotalAbsorbs = UnitGetTotalAbsorbs
 
 ----------------------------
@@ -234,7 +232,7 @@ local InterruptTable = {
 		{ 34433, jps.mana("player") < 0.75 and priest.canShadowfiend(rangedTarget) , rangedTarget },
 		{ 123040, jps.mana("player") < 0.75 and priest.canShadowfiend(rangedTarget) , rangedTarget },
 		-- "Don des naaru" 59544
-		{ 59544, (select(2,GetSpellBookItemInfo(priest.Spell["NaaruGift"]))~=nil) and (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) , LowestImportantUnit , "Move_Naaru_"..LowestImportantUnit },
+		{ 59544, jps.IsSpellKnown(59544) and (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) , LowestImportantUnit , "Move_Naaru_"..LowestImportantUnit },
 		-- "Rénovation" 139 -- debuff "Ame affaiblie" 6788 -- "Prière de guérison" 33076  on CD
 		{ 139, not jps.buff(139,LowestImportantUnit) and (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) , LowestImportantUnit , "Move_Renew_"..LowestImportantUnit },
 		-- "Feu intérieur" 588 -- "Volonté intérieure" 73413
@@ -275,11 +273,6 @@ local InterruptTable = {
 -- SPELL TABLE ---------
 ------------------------
 
--- CancelUnitBuff("player",priest.Spell["SpiritShell"])
-		--{ {"macro","/cancelaura "..priest.Spell["SpiritShell"],"player"}, (LowestImportantUnitHpct < 0.55) and jps.buffId(109964) , "player" , "Macro_CancelAura_Carapace" }, 
--- SpellStopCasting()
-		--{ {"macro","/stopcasting"},  spellstop == tostring(select(1,GetSpellInfo(2050))) and jps.CastTimeLeft("player") > 0.5 and (LowestImportantUnitHpct < 0.75) , "player" , "Macro_StopCasting" },
-
 	spellTable = {
 		
 	-- TRINKETS -- jps.useTrinket(0) est "Trinket0Slot" est slotId  13 -- "jps.useTrinket(1) est "Trinket1Slot" est slotId  14
@@ -297,7 +290,7 @@ local InterruptTable = {
 			-- "Pierre de soins" 5512
 			{ {"macro","/use item:5512"}, select(1,IsUsableItem(5512))==1 and jps.itemCooldown(5512)==0 , "player" , "PIERRESOINS"},
 			-- "Prière du désespoir" 19236
-			{ 19236, select(2,GetSpellBookItemInfo(priest.Spell["Desesperate"]))~=nil , "player" , "DESESPERATE" },
+			{ 19236, jps.IsSpellKnown(19236) , "player" , "DESESPERATE" },
 			-- "Oubli" 586 -- Fantasme 108942 -- vous dissipez tous les effets affectant le déplacement sur vous-même et votre vitesse de déplacement ne peut être réduite pendant 5 s
 			-- "Oubli" 586 -- Glyphe d'oubli 55684 -- Votre technique Oubli réduit à présent tous les dégâts subis de 10%.
 			{ 586, playerAggro and jps.IsSpellKnown(108942) , "player" , "Aggro_Oubli_" },
@@ -371,7 +364,7 @@ local InterruptTable = {
 			-- Dispell -- "Glyph of Purify" 55677 Your Purify spell also heals your target for 5% of maximum health
 			{ 527, jps.canDispel(LowestImportantUnit,{"Magic"}) and jps.glyphInfo(55677) , LowestImportantUnit , "Emergency_Dispell"..LowestImportantUnit },
 			-- "Don des naaru" 59544
-			{ 59544, (select(2,GetSpellBookItemInfo(priest.Spell["NaaruGift"]))~=nil) , LowestImportantUnit , "Emergency_Naaru_"..LowestImportantUnit },
+			{ 59544, jps.IsSpellKnown(59544) , LowestImportantUnit , "Emergency_Naaru_"..LowestImportantUnit },
 			-- "Renew" -- Haste breakpoints are 12.5 and 16.7%(Holy)
 			{ 139, not jps.buff(139,LowestImportantUnit) , LowestImportantUnit , "Emergency_Renew_"..LowestImportantUnit },
 		},
@@ -416,7 +409,7 @@ local InterruptTable = {
 	-- "Archange" 81700 -- "Evangélisme" 81661 buffStacks == 5
 	{ 81700, (LowestImportantUnitHpct < priest.get("HealthDPS")/100) and (jps.buffStacks(81661) == 5) , "player", "ARCHANGE_" },
 	-- "Don des naaru" 59544
-	{ 59544, (select(2,GetSpellBookItemInfo(priest.Spell["NaaruGift"]))~=nil) and (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) , LowestImportantUnit , "Naaru_"..LowestImportantUnit },
+	{ 59544, jps.IsSpellKnown(59544) and (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) , LowestImportantUnit , "Naaru_"..LowestImportantUnit },
 	-- "Renew" -- Haste breakpoints are 12.5 and 16.7%(Holy)
 	{ 139, not jps.buff(139,LowestImportantUnit) and (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) , LowestImportantUnit , "Renew_"..LowestImportantUnit },
 	-- "Soins supérieurs" 2060

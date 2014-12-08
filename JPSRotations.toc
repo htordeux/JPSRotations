@@ -1,5 +1,5 @@
-## Interface: 50400
-## Title: JPS Rotations
+## Interface: 60000
+## Title: |cffff8000JPS Rotations
 ## Notes: Protect your LUA.
 ## Dependencies: JPS
 ## SavedVariablesPerCharacter: mConfigData
