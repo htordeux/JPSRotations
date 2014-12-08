@@ -198,7 +198,7 @@ local priestHolyPvP = function()
 	-- Config FOCUS
 	if not jps.UnitExists("focus") and canDPS("mouseover") then
 		-- set focus an enemy targeting you
-		if jps.UnitIsUnit("mouseovertarget","player") then
+		if jps.UnitIsUnit("mouseovertarget","player") not jps.UnitIsUnit("target","mouseover") then
 			jps.Macro("/focus mouseover")
 			local name = GetUnitName("focus")
 			print("Enemy DAMAGER|cff1eff00 "..name.." |cffffffffset as FOCUS")
@@ -207,9 +207,6 @@ local priestHolyPvP = function()
 			jps.Macro("/focus mouseover")
 			local name = GetUnitName("focus")
 			print("Enemy HEALER|cff1eff00 "..name.." |cffffffffset as FOCUS")
-		-- set focus on mouseover
-		elseif not jps.UnitIsUnit("target","mouseover") then
-			jps.Macro("/focus mouseover")
 		end
 	end
 
