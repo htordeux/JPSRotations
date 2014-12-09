@@ -207,7 +207,6 @@ local priestDiscPvP = function()
 local InterruptTable = {
 	{priest.Spell.flashHeal, 0.75, jps.buffId(priest.Spell.spiritShellBuild) or jps.buffId(priest.Spell.innerFocus) },
 	{priest.Spell.greaterHeal, 0.90, jps.buffId(priest.Spell.spiritShellBuild) },
-	{priest.Spell.heal, 1 , jps.buffId(priest.Spell.spiritShellBuild) },
 	{priest.Spell.prayerOfHealing, 0.85, jps.buffId(priest.Spell.spiritShellBuild) or jps.buffId(priest.Spell.innerFocus) or jps.MultiTarget}
 }
 
@@ -233,10 +232,6 @@ local InterruptTable = {
 		{ 123040, jps.mana("player") < 0.75 and priest.canShadowfiend(rangedTarget) , rangedTarget },
 		-- "Don des naaru" 59544
 		{ 59544, jps.IsSpellKnown(59544) and (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) , LowestImportantUnit , "Move_Naaru_"..LowestImportantUnit },
-		-- "Rénovation" 139 -- debuff "Ame affaiblie" 6788 -- "Prière de guérison" 33076  on CD
-		{ 139, not jps.buff(139,LowestImportantUnit) and (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) , LowestImportantUnit , "Move_Renew_"..LowestImportantUnit },
-		-- "Feu intérieur" 588 -- "Volonté intérieure" 73413
-		{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player") , "player", "Move_InnerFire" },
 	}
 
 	parseShell = {
@@ -248,7 +243,6 @@ local InterruptTable = {
 	--TANK Buff Spirit Shell 114908
 		{ 2061, jps.buffId(114908,LowestImportantUnit) and (UnitGetTotalAbsorbs(LowestImportantUnit) <= priest.AvgAmountFlashHeal) , LowestImportantUnit , "Carapace_Buff_SoinsRapides_"..LowestImportantUnit },
 		{ 2060, jps.buffId(114908,LowestImportantUnit) and (UnitGetTotalAbsorbs(LowestImportantUnit) <= priest.AvgAmountFlashHeal) , LowestImportantUnit , "Carapace_Buff_SoinsSup_"..LowestImportantUnit },
-		{ 2050, jps.buffId(114908,LowestImportantUnit) and (UnitGetTotalAbsorbs(LowestImportantUnit) > priest.AvgAmountFlashHeal) , LowestImportantUnit , "Carapace_Buff_Soins_"..LowestImportantUnit },
 	}
 	
 	parseControl = {
@@ -282,13 +276,11 @@ local InterruptTable = {
 	{ 2061, jps.buff(114255) and (jps.buffDuration(114255) < 4) , LowestImportantUnit , "SoinsRapides_Light_"..LowestImportantUnit },
 	-- "Suppression de la douleur" 33206 "Pain Suppression"
 	{ 33206, LowestImportantUnitHpct < 0.40 , LowestImportantUnit , "Emergency_Pain_"..LowestImportantUnit },
-	-- "Void Shift" 108968
-	{ 108968, not playerAggro and UnitIsUnit(LowestImportantUnit,"player")~=1 and LowestImportantUnitHpct < 0.40 and jps.hp("player") > 0.85 , LowestImportantUnit , "Emergency_VoidShift_"..LowestImportantUnit },
 
 	{ "nested", jps.hp("player") < priest.get("HealthEmergency")/100 ,
 		{
 			-- "Pierre de soins" 5512
-			{ {"macro","/use item:5512"}, select(1,IsUsableItem(5512))==1 and jps.itemCooldown(5512)==0 , "player" , "PIERRESOINS"},
+			{ {"macro","/use item:5512"}, select(1,IsUsableItem(5512)) == true and jps.itemCooldown(5512)==0 , "player" , "PIERRESOINS"},
 			-- "Prière du désespoir" 19236
 			{ 19236, jps.IsSpellKnown(19236) , "player" , "DESESPERATE" },
 			-- "Oubli" 586 -- Fantasme 108942 -- vous dissipez tous les effets affectant le déplacement sur vous-même et votre vitesse de déplacement ne peut être réduite pendant 5 s
@@ -310,7 +302,7 @@ local InterruptTable = {
 	-- "Power Word: Shield" 17 -- TIMER SHIELD
 	{ 17, (type(ShieldTarget) == "string") , ShieldTarget , "Timer_ShieldTarget" },
 	-- "Prière de guérison" 33076 -- TIMER POM
-	{ 33076, UnitAffectingCombat("player") == 1 and not jps.buffTracker(33076) , LowestImportantUnit , "Tracker_Mending_"..LowestImportantUnit },
+	{ 33076, UnitAffectingCombat("player") == true and not jps.buffTracker(33076) , LowestImportantUnit , "Tracker_Mending_"..LowestImportantUnit },
 	
 	-- "Inner Focus" 89485 "Focalisation intérieure" --  96267 Immune to Silence, Interrupt and Dispel effects 5 seconds remaining
 	{ 89485, playerAggro and not jps.buffId(89485,"player") and (LowestImportantUnitHpct > 0.40) , "player" , "Focus_Aggro" },
@@ -355,8 +347,6 @@ local InterruptTable = {
 			{ 2061, not jps.Moving and jps.buff(59889,"player") and (LowestImportantUnitHpct < 0.40) , LowestImportantUnit , "Emergency_SoinsRapides_Borrowed_"..LowestImportantUnit },
 			-- "Prière de guérison" 33076 -- buff 4P pvp aug. 50% soins -- "Holy Spark" 131567 "Etincelle sacrée"
 			{ 33076, (type(MendingTarget) == "string") , MendingTarget , "Emergency_MendingTarget" },
-			-- "Soins de lien"
-			{ 32546 , not jps.Moving and type(BindingHealTarget) == "string" , BindingHealTarget , "Emergency_Lien_" },
 			-- "Soins supérieurs" 2060 "Borrowed" 59889
 			{ 2060, not playerAggro and not jps.Moving and jps.buff(59889,"player") and (LowestImportantUnitHpct > 0.40) , LowestImportantUnit , "Emergency_SoinsSup_Borrowed_"..LowestImportantUnit  },
 			-- "Soins rapides" 2061
@@ -365,8 +355,6 @@ local InterruptTable = {
 			{ 527, jps.canDispel(LowestImportantUnit,{"Magic"}) and jps.glyphInfo(55677) , LowestImportantUnit , "Emergency_Dispell"..LowestImportantUnit },
 			-- "Don des naaru" 59544
 			{ 59544, jps.IsSpellKnown(59544) , LowestImportantUnit , "Emergency_Naaru_"..LowestImportantUnit },
-			-- "Renew" -- Haste breakpoints are 12.5 and 16.7%(Holy)
-			{ 139, not jps.buff(139,LowestImportantUnit) , LowestImportantUnit , "Emergency_Renew_"..LowestImportantUnit },
 		},
 	},
 
@@ -405,29 +393,23 @@ local InterruptTable = {
 	{ 34433, jps.mana("player") < 0.75 and priest.canShadowfiend(rangedTarget) , rangedTarget },
 	{ 123040, jps.mana("player") < 0.75 and priest.canShadowfiend(rangedTarget) , rangedTarget },
 	-- "Infusion de puissance" 10060 
-	{ 10060, not jps.buffId(10060,"player") and UnitAffectingCombat("player") == 1, "player" , "POWERINFUSION_" },
+	{ 10060, not jps.buffId(10060,"player") and UnitAffectingCombat("player") == true , "player" , "POWERINFUSION_" },
 	-- "Archange" 81700 -- "Evangélisme" 81661 buffStacks == 5
 	{ 81700, (LowestImportantUnitHpct < priest.get("HealthDPS")/100) and (jps.buffStacks(81661) == 5) , "player", "ARCHANGE_" },
 	-- "Don des naaru" 59544
 	{ 59544, jps.IsSpellKnown(59544) and (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) , LowestImportantUnit , "Naaru_"..LowestImportantUnit },
-	-- "Renew" -- Haste breakpoints are 12.5 and 16.7%(Holy)
-	{ 139, not jps.buff(139,LowestImportantUnit) and (LowestImportantUnitHealth > priest.AvgAmountFlashHeal) , LowestImportantUnit , "Renew_"..LowestImportantUnit },
 	-- "Soins supérieurs" 2060
 	{ 2060, not playerAggro and (LowestImportantUnitHealth > priest.AvgAmountGreatHeal) , LowestImportantUnit , "SoinsSup_"..LowestImportantUnit  },
-
 	-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
 	{ 6346, not jps.buff(6346,"player") , "player" },
-	-- "Feu intérieur" 588 -- "Volonté intérieure" 73413
-	{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player") }, -- "target" by default must must be a valid target
-	-- "Soins" 2050
-	{ 2050, LowestImportantUnitHealth > priest.AvgAmountHeal , LowestImportantUnit , "Soins_"..LowestImportantUnit },
+
 }
 
 	local spell,target = parseSpellTable(spellTable)
 	return spell,target
 end
 
-jps.registerRotation("PRIEST","DISCIPLINE", priestDiscPvP , "Disc Priest Custom", false , true)
+jps.registerRotation("PRIEST","DISCIPLINE", priestDiscPvP , "Disc Priest PvP", false , true)
 
 -- Divine Star belong to schools that are not used by any of the class's other spells. When these spells are instant cast, this means that it is not possible for that spell to be locked down.
 -- Spirit Shell(SS) se cumule avec Divine Aegis(DA) Bouclier protecteur si soins critiques

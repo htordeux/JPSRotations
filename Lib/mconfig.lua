@@ -114,7 +114,7 @@ function mConfig:addCheckBox(key, text, tooltip, defaultValue)
     --checkbutton.tooltip = tooltip
     checkbutton:SetChecked(defaultValue)
     checkbutton:SetScript("OnClick", function()
-        self.values[key] = checkbutton:GetChecked(defaultValue) == 1
+        self.values[key] = checkbutton:GetChecked(defaultValue) == true
     end)
    -- checkbutton:SetWidth(30)
     optionFrame:Show()

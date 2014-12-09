@@ -204,19 +204,6 @@ for _,unit in ipairs(FriendUnit) do
 	end
 end
 
-local RenewFriend = nil 
-local RenewFriendHealth = 0.50
-local FriendHealerInRange = jps.FriendHealerInRange()
-for _,unit in ipairs(FriendUnit) do
-	local unitHP = jps.hp(unit)
-	if not FriendHealerInRange then
-		if unitHP < RenewFriendHealth then
-			RenewFriend = unit
-			RenewFriendHealth = unitHP
-		end
-	end
-end
-
 -- if jps.debuffDuration(114404,"target") > 18 and jps.UnitExists("target") then MoveBackwardStart() end
 -- if jps.debuffDuration(114404,"target") < 18 and jps.debuff(114404,"target") and jps.UnitExists("target") then MoveBackwardStop() end
 
@@ -313,13 +300,11 @@ local parseHeal = {
 	-- "Prière du désespoir" 19236
 	{ 19236, jps.IsSpellKnown(19236) , "player" },
 	-- "Pierre de soins" 5512
-	{ {"macro","/use item:5512"}, select(1,IsUsableItem(5512))==1 and jps.itemCooldown(5512)==0 , "player" },
+	{ {"macro","/use item:5512"}, select(1,IsUsableItem(5512)) == true and jps.itemCooldown(5512)==0 , "player" },
 	-- "Power Word: Shield" 17	
 	{ 17, playerAggro and not jps.debuff(6788,"player") and not jps.buff(17,"player") , "player" },
 	-- "Prayer of Mending" "Prière de guérison" 33076 
 	{ 33076, playerAggro and not jps.buff(33076,"player") , "player" },
-	-- "Renew" 139 Self heal when critical 
-	{ 139, not jps.buff(139,"player") , "player" },
 }
 
 local parseAggro = {
@@ -338,20 +323,15 @@ local parseAggro = {
 -----------------------------
 
 local spellTable = {
-	-- "Shadowform" 15473 -- UnitAffectingCombat("player") == 1
+	-- "Shadowform" 15473 -- UnitAffectingCombat("player") == true
 	{ 15473, not jps.buff(15473) , "player" },
 	-- "Spectral Guise" gives buff 119032
 	{"nested", not jps.Combat and not jps.buff(119032,"player") , 
 		{
 			-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
 			{ 6346, not jps.buff(6346,"player") , "player" },
-			-- "Inner Fire" 588 Keep Inner Fire up 
-			{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player"), "player" }, -- "Volonté intérieure" 73413
 			-- "Fortitude" 21562 Keep Inner Fortitude up 
-			--{ 21562, not jps.buff(21562,"player") , "player" },
-			--{ 21562, jps.buffMissing(21562) , "player" },
-			-- "Renew" 139 Self heal when critical 
-			{ 139, playerhealthpct < 0.90 and not jps.buff(139,"player"), "player" },
+			{ 21562, jps.buffMissing(21562) , "player" },
 			-- "Enhanced Intellect" 79640 -- "Alchemist's Flask 75525
 			{ {"macro","/use item:75525"}, jps.buffDuration(79640,"player") < 900 , "player" },
 		},
@@ -407,15 +387,7 @@ local spellTable = {
 	{ 15286, AvgHealthLoss < priest.get("HealthDPS")/100 , "player" },
 	-- SELF HEAL
 	{ "nested", playerhealthpct < priest.get("HealthEmergency")/100 , parseHeal },
-	-- "Renew" 139 FriendUnit in Arena or not FriendHealerInRange
-	{ 139, type(RenewFriend) == "string" and not jps.buff(139,RenewFriend), RenewFriend },
-	-- "Power Word: Shield" 17 FriendUnit in Arena or not FriendHealerInRange
-	{ 17, type(RenewFriend) == "string" and not jps.debuff(6788,RenewFriend) and not jps.buff(17,RenewFriend) , RenewFriend },
 
-	-- "Mass Dispel" 32375 "Dissipation de masse"
-	-- "Dispel" "Purifier" 527 -- UNAVAILABLE IN SHADOW FORM
-	-- "Void Shift" 108968 -- UNAVAILABLE in RBG
-	--{ 108968 , type(VoidFriend) == "string" , VoidFriend , "|cff1eff00Void_MultiUnit_" },
 	-- "Leap of Faith" 73325 -- "Saut de foi"
 	{ 73325 , priest.get("Leap") and type(LeapFriendFlag) == "string" , LeapFriendFlag , "|cff1eff00Leap_MultiUnit_" },
 
@@ -439,11 +411,9 @@ local spellTable = {
 	{ 528, jps.castEverySeconds(528,10) and type(DispelOffensiveEnemyTarget) == "string"  , DispelOffensiveEnemyTarget , "|cff1eff00DispelOffensive_MULTITARGET_" },
 	
 	-- "Power Infusion" "Infusion de puissance" 10060
-	{ 10060, UnitAffectingCombat("player")==1 , "player" },
+	{ 10060, UnitAffectingCombat("player") == true , "player" },
 	-- "Gardien de peur" 6346 -- FARMING OR PVP -- NOT PVE
 	{ 6346, not jps.buff(6346,"player") , "player" },
-	-- "Inner Fire" 588 Keep Inner Fire up 
-	{ 588, not jps.buff(588,"player") and not jps.buff(73413,"player"), "player" }, -- "Volonté intérieure" 73413
 	-- "Dispersion" 47585 LOW MANA
 	{ 47585, playermana < 0.50 and jps.myDebuffDuration(589,rangedTarget) > 6 and jps.myDebuffDuration(34914,rangedTarget) > 6 and jps.myLastCast(8092) , "player" , "Mana_Dispersion" },
 	-- "Mind Flay" 15407
@@ -454,7 +424,7 @@ local spellTable = {
 	local target = nil
 	spell,target = parseSpellTable(spellTable)
 	return spell,target
-end, "Shadow Priest Custom", false, true)
+end, "Shadow Priest PvP", false, true)
 
 -- Cascade bounces from target to target (either friendly only or enemy only) splitting with each jump and either damaging or healing the target. The cascade jumps 4 times
 -- Cascade spell doesn't heal and damage at the same time When cast at an enemy, it will only bounce to enemies that you are in combat with --  Cascade only heals if cast on a friendly target

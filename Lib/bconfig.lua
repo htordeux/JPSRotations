@@ -194,7 +194,7 @@ jps.listener.registerEvent("PLAYER_FLAGS_CHANGED", function(unit)
 end)
 -- JumpOrAscendStop() -- MoveBackwardStart() -- MoveBackwardStop()
 local playerIsAFK = function(self)
-	if jps.checkTimer("AFK") > 0 and UnitIsAFK("player") == 1 and IsMounted() == nil then
+	if jps.checkTimer("AFK") > 0 and UnitIsAFK("player") == true and IsMounted() == nil then
 		JumpOrAscendStart()
 	end
 end

@@ -24,8 +24,6 @@ local classPlayer = select(2,UnitClass("player"))
 if classPlayer == "WARRIOR" then
 	addMacroUIButton("INTERFACE/TARGETINGFRAME/UI-RaidTargetingIcon_8", _G["SLASH_"..slashId.."1"])
 end
-
-local L = MyLocalizationTable
 	
 ----------------------------
 -- ROTATION
@@ -72,85 +70,85 @@ jps.registerRotation("WARRIOR","FURY",function()
 	------------------------
 	-- SPELL TABLE ---------
 	------------------------
+	
+	-- "Bloodsurge" 46916 "Afflux sanguin"
+	-- "Meat Cleaver" 12950 "Fendoir à viande"
 
 	local spellTable = {
 	
-		-- "Bloodthirst" 23881 "Sanguinaire"
-		{ 23881, true , rangedTarget , "Bloodthirst" },
-		-- "Heroic Leap" 6544 "Bond héroïque"
-		--{ {"macro","/cast "..leap} , jps.PvP and (jps.cooldown(6544)==0) and (CheckInteractDistance(rangedTarget, 3) == nil) , rangedTarget  },
-		-- "Charge" 100 -- IsFalling() returns 1 if the character is currently falling, nil otherwise
-		{ 100, (CheckInteractDistance(rangedTarget, 3) ~= 1) and IsFalling() == 1 , rangedTarget , "Charge" },
 		-- TRINKETS -- jps.useTrinket(0) est "Trinket0Slot" est slotId  13 -- "jps.useTrinket(1) est "Trinket1Slot" est slotId  14  -- Do not use while Dispersion jps.checkTimer(47585) == 0
 		--{ jps.useTrinket(0), jps.UseCds },
 		--{ jps.useTrinket(1), jps.UseCds },
 		-- "Pierre de soins" 5512
-		{ {"macro","/use item:5512"}, UnitAffectingCombat("player")==1 and select(1,IsUsableItem(5512))==1 and jps.itemCooldown(5512)==0 and (jps.hp("player") < 0.50) , "player" , "UseItem"},
-		-- "Heroic Throw" 57755 "Lancer héroïque"
-		{ 57755, true , rangedTarget , "Heroic Throw" },
-		-- "Charge" 100
-		{ 100, jps.UseCDs and (CheckInteractDistance(rangedTarget, 3) ~= 1) , rangedTarget , "Charge"},
-		-- "Impending Victory" 103840 "Victoire imminente"
-		{ 103840, jps.rage() > 10 , rangedTarget , "Impending Victory" },
-		-- "Victory Rush" 34428 "Ivresse de la victoire" -- buff "Victorious" 32216 "Victorieux"
-		{ 34428, jps.buff(32216) , rangedTarget , "Impending Victory" },
-		-- "Berserker Rage" 18499 "Rage de berserker"
-		{ 18499 , (not Rage) , "player" , "Berserker Rage" },
-		
+		{ {"macro","/use item:5512"} , UnitAffectingCombat("player") == true and select(1,IsUsableItem(5512)) == true and jps.itemCooldown(5512)==0 and (jps.hp("player") < 0.50) , "player" , "_UseItem"},
+
 		-- "Pummel" 6552 "Volée de coups"
-		{ 6552, jps.ShouldKick(rangedTarget) , rangedTarget , "Pummel" },
-		-- "Dragon Roar" 118000 "Rugissement de dragon"
-		{ 118000, (CheckInteractDistance(rangedTarget, 3) == 1), rangedTarget , "Dragon Roar" },
-		-- "Shockwave" 46968 "Onde de choc"
-		{ 46968, (CheckInteractDistance(rangedTarget, 3) == 1), rangedTarget , "Shockwave" },
-		-- "Disrupting Shout" 102060 "Cri perturbant"
-		{ 102060, jps.IsCasting(rangedTarget) , rangedTarget , "Disrupting Shout" },
+		{ warrior.spells["Pummel"], jps.ShouldKick(rangedTarget) , rangedTarget , "_Pummel" },
 		-- "Mass Spell Reflection" 114028 "Renvoi de sort de masse"
-		{ 114028, jps.IsCasting(rangedTarget) , rangedTarget , "Mass Spell Reflection" },
-		
-		-- "Stoneform" 20594 "Forme de pierre"
-		{ 20594, playerAggro , "player" , "Stoneform" },
-		-- "Disarm" 676 "Désarmement"
-		--{ 676, EnemyCaster(rangedTarget) == "cac", rangedTarget , "Disarm"  },
-		-- "Lifeblood" 74497 same ID spell & buff -- Herbalist.
-		{ 74497, UnitAffectingCombat("player")==1 , "player" , "Lifeblood" },
-		
-		-- "Bloodsurge" 46916 "Afflux sanguin"
-		-- buff "Raging Blow!" 131116 "Coup déchaîné !"
-		-- "Avatar" 107574 "Avatar" -- "Colossus Smash" 86346 same ID spell & debuff
-		{ 107574, (jps.buff(131116,"player") or jps.buff(46916)) and jps.rage() > 30 and (jps.hp(rangedTarget,"abs") > 200000) , rangedTarget , "Avatar" },
-		-- "Colossus Smash" 86346 "Frappe du colosse" -- "Colossus Smash" 86346 same ID spell & debuff
-		{ 86346, (jps.buff(131116,"player") or jps.buff(46916)) and jps.rage() > 30 , rangedTarget , "Colossus Smash" },
-		-- "Recklessness" 1719 "Témérité"
-		{ 1719, jps.UseCDs and (UnitAffectingCombat("player")==1) and (jps.buff(131116,"player") or jps.buff(46916)) and jps.rage() > 30 , "player" , "Recklessness" },
-		-- "Raging Blow" 85288 "Coup déchaîné" -- buff Raging Blow! 131116
-		{ 85288, jps.buff(131116,"player") , rangedTarget , "Raging Blow" },
-		-- "Wild Strike" 100130 "Frappe sauvage" -- donne DEBUFF "Mortal Wounds" 115804 "Blessures mortelles" -- Healing effects received reduced by 25%
-		{ 100130, jps.buff(46916) and jps.rage() > 20 , rangedTarget ,"Wild Strike" },
-		-- "Execute" 5308 "Exécution"
-		{ 5308, jps.hp(rangedTarget) < 0.20 , rangedTarget , "Execute" },
-		-- "Cleave" 845 "Enchaînement"
-		{ 845, (enemycount > 1) and jps.rage() > 60 , rangedTarget , "Cleave" },
-		-- "Thunder Clap" 6343 "Coup de tonnerre" 
-		{ 6343, (enemycount > 3) , rangedTarget , "Thunder Clap" },
-		-- "Deadly Calm" 85730 "Calme mortel" same ID spell & buff -- REMOVED 5.2
-		--{ 85730, jps.rage() > 40 , rangedTarget , "Deadly Calm" },
-		-- "Heroic Strike" 78 "Frappe héroïque"
-		{ 78, jps.rage() > 60 , rangedTarget , "Heroic Strike" },
-		-- "Bloodthirst" 23881 "Sanguinaire"
-		{ 23881, true , rangedTarget , "Bloodthirst" },
+		{ warrior.spells["MassSpellReflection"], jps.IsCasting(rangedTarget)  and jps.UnitIsUnit("targettarget","player") , rangedTarget , "_Mass Spell Reflection" },
 		-- "Shattering Throw" 64382 "Lancer fracassant"
-		{ 64382, jps.rage() > 30 and isboss and not jps.debuff(64382,rangedTarget) , rangedTarget , "Shattering Throw" },
-		
-		-- "Commanding Shout" 469 "Cri de commandement"
-		{ 469, jps.rage() < 70 and not jps.debuff(86346,rangedTarget) , "player" , "Commanding Shout" },
+		{ warrior.spells["ShatteringThrow"], jps.rage() > 30 and not jps.debuff(64382,rangedTarget) and (jps.hp(rangedTarget,"abs") > 200000) , rangedTarget , "_Shattering Throw" },
+
 		-- "Brise-genou" 1715 "Hamstring"
-		--{ 1715, jps.rage() > 10 and (jps.myDebuffDuration(1715) < 3)  , rangedTarget , "Hamstring" },
+		--{ warrior.spells["Hamstring"] , jps.rage() > 10 and (jps.myDebuffDuration(1715) < 3)  , rangedTarget , "_Hamstring" },
+
+		-- "Berserker Rage" 18499 "Rage de berserker"
+		{ warrior.spells["BerserkerRage"] , not Rage , "player" , "_Berserker Rage" },		
+		-- "Commanding Shout" 469 "Cri de commandement"
+		{ warrior.spells["CommandingShout"] , jps.rage() < 70 and not jps.buff(469) , "player" , "_Commanding Shout" },	
+		-- "Avatar" 107574
+		{ warrior.spells["Avatar"], jps.rage() > 30 and (jps.hp(rangedTarget,"abs") > 200000) , rangedTarget , "_Avatar" },
+		-- "Stoneform" 20594 "Forme de pierre"
+		{ warrior.spells["Stoneform"] , playerAggro , "player" , "_Stoneform" },
+		-- "Lifeblood" 74497 same ID spell & buff -- Herbalist.
+		{ warrior.spells["Lifeblood"] , UnitAffectingCombat("player") == true , "player" , "_Lifeblood" },
+		-- "Victory Rush" 34428 "Ivresse de la victoire"
+		{ warrior.spells["VictoryRush"] , true , rangedTarget , "_VictoryRush" },
+		
+		
+		-- "Shockwave" 46968 "Onde de choc"
+		{ warrior.spells["Shockwave"] , jps.MultiTarget and (enemycount > 1) and CheckInteractDistance(rangedTarget, 3) == true, rangedTarget , "_Shockwave" },
+		-- "Bladestorm" 46924
+		{ warrior.spells["Bladestorm"], jps.MultiTarget and (enemycount > 1) and jps.rage() > 60 , rangedTarget , "_Bladestorm" },
+		-- "Whirlwind" 1680
+		{ warrior.spells["Whirlwind"], jps.MultiTarget and (enemycount > 1) and jps.rage() > 60 , rangedTarget , "_Whirlwind" },
+
+		-- "Heroic Throw" 57755 "Lancer héroïque"
+		{ warrior.spells["HeroicThrow"] , true , rangedTarget , "_Heroic Throw" },	
+		-- "Charge" 100
+		{ 100, jps.UseCDs and not CheckInteractDistance(rangedTarget, 3) , rangedTarget , "_Charge"},
+		-- "Recklessness" 1719 "Témérité" -- buff Raging Blow! 131116 -- "Bloodsurge" 46916 "Afflux sanguin"
+		{ warrior.spells["Recklessness"], jps.UseCDs and (jps.buff(131116) or jps.buff(46916)) and jps.rage() > 30 and (jps.hp(rangedTarget,"abs") > 200000) , "player" , "_Recklessness" },
+		-- "Execute" 5308 "Exécution"
+		{ warrior.spells["Execute"], jps.hp(rangedTarget) < 0.20 , rangedTarget , "Execute" },
+
+		-- "Wild Strike" 100130 "Frappe sauvage"
+		{ warrior.spells["WildStrike"] , jps.rage() > 80 , rangedTarget ,"_Wild Strike Rage" },
+		-- "Raging Blow" 85288 "Coup déchaîné" -- buff Raging Blow! 131116
+		{ warrior.spells["RagingBlow"] , jps.buffStacks(131116) == 2 , rangedTarget , "_Raging Blow Stacks" },
+
+		
+		-- "Bloodthirst" 23881 "Sanguinaire"
+		{ warrior.spells["Bloodthirst"], true , rangedTarget , "_Bloodthirst" },
+		-- "Ravager" 152277  -- Talent Choice
+		{ warrior.spells["Ravager"] , true , rangedTarget , "_Ravager" },
+		-- "Siegebreaker" 176289 -- Talent Choice
+		{ warrior.spells["Siegebreaker"] , true , rangedTarget , "_Siegebreaker" },
+
+		-- "Raging Blow" 85288 "Coup déchaîné" -- buff Raging Blow! 131116
+		{ warrior.spells["RagingBlow"] , jps.buff(131116) , rangedTarget , "_Raging Blow" },
+		-- "Wild Strike" 100130 "Frappe sauvage"
+		{ warrior.spells["WildStrike"] , true , rangedTarget ,"_Wild Strike" },
+		-- "StormBolt" "107570"
+		{ warrior.spells["StormBolt"] , true , rangedTarget ,"_StormBolt" },
+		
+
+
 	}
 
 		spell,target = parseSpellTable(spellTable)
 		return spell,target
-end, "Warrior Custom" , false, true)
+end, "Warrior Custom PvP" , false, true)
 
 
 	-- "Victorieux" 32216 " Victorious -- Ivresse de la victoire activée -- Attaque instantanément la cible, lui inflige 1246 points de dégâts et vous soigne pour un montant égal à 20% de votre maximum de points de vie
@@ -172,12 +170,11 @@ end, "Warrior Custom" , false, true)
 	-- "Disrupting Shout" 102060 "Cri perturbant" -- Interrompt toutes les incantations de sorts à moins de 10 mètres et empêche tout sort de la même école d’être lancé pendant 4 s
 	-- "Mass Spell Reflection" 114028 "Renvoi de sort de masse" BUFF same ID -- Renvoie le prochain sort lancé sur vous et les membres du groupe ou raid à moins de 20 mètres d’un sort unique pendant 5 s.
 	-- "Stoneform" 20594 "Forme de pierre" -- réduit tous les dégâts subis de 10% pendant 8 s
-	-- "Disarm" 676 "Désarmement" -- Retire ses armes et son bouclier à l’ennemi pendant 8 s
 
 	-- "Raging Blow" 85288 "Coup déchaîné" -- Le fait de devenir Enragé permet une utilisation de Coup déchaîné.
 	-- "Colossus Smash" 86346 "Frappe du colosse" -- permet à vos attaques d'ignorer 100% de son armure pendant 6 s
 	-- "Recklessness" 1719 "Témérité" -- Confère à vos attaques spéciales 50% de chances supplémentaires d’être critiques. Dure 12 s.
-	-- "Cleave" 845 "Enchaînement" -- Une attaque circulaire qui frappe la cible et une cible proche supplémentaire
+
 	-- "Thunder Clap" 6343 "Coup de tonnerre" -- Foudroie les ennemis à moins de 8 mètres, leur infligeant 312 points de dégâts, et applique sur eux l'effet Coups affaiblis
 	-- "Heroic Strike" 78 "Frappe héroïque" -- 
 	-- Glyphe de coups gênants -- Frappe héroïque et Enchaînement diminuent aussi la vitesse de déplacement de la cible de 50% pendant 8 s
